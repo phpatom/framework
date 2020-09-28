@@ -25,7 +25,9 @@ class Validation implements ServiceProviderContract
      */
     public function __construct($translation = null)
     {
-        if (is_array($translation)) {
+        if (is_null($translation)) {
+            $this->translation = new TranslationBag();
+        } elseif (is_array($translation)) {
             $this->translation = new TranslationBag($translation);
         } elseif ($translation instanceof TranslationBag) {
             $this->translation = $translation;

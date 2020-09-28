@@ -1,5 +1,3 @@
-# Basic usage
-```php
 <?php
 
 use Atom\Routing\MatchedRoute;
@@ -39,6 +37,3 @@ $app = WebApp::create(__DIR__)
         ];
     }, "home");
 $app->run();
-
-```
-
