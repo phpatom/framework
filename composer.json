@@ -31,7 +31,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Atom\\Web\\Test\\": "tests"
+            "Atom\\Web\\Tests\\": "tests"
         }
     },
     "minimum-stability": "stable"
