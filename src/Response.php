@@ -14,7 +14,8 @@ class Response extends BaseResponse
         int $status = 200,
         array $headers = [],
         int $encodingOptions = BaseResponse\JsonResponse::DEFAULT_JSON_FLAGS
-    ) {
+    ): BaseResponse\JsonResponse
+    {
         return new BaseResponse\JsonResponse($data, $status, $headers, $encodingOptions);
     }
 
@@ -22,7 +23,8 @@ class Response extends BaseResponse
         $data,
         int $status = 200,
         array $headers = []
-    ) {
+    ): BaseResponse\HtmlResponse
+    {
         return new BaseResponse\HtmlResponse($data, $status, $headers);
     }
 
@@ -30,14 +32,16 @@ class Response extends BaseResponse
         $data,
         int $status = 200,
         array $headers = []
-    ) {
+    ): BaseResponse\TextResponse
+    {
         return new BaseResponse\TextResponse($data, $status, $headers);
     }
 
     public static function empty(
         int $status = 200,
         array $headers = []
-    ) {
+    ): BaseResponse\EmptyResponse
+    {
         return new BaseResponse\EmptyResponse($status, $headers);
     }
 
@@ -45,7 +49,8 @@ class Response extends BaseResponse
         $uri,
         int $status = 200,
         array $headers = []
-    ) {
+    ): BaseResponse\RedirectResponse
+    {
         return new BaseResponse\RedirectResponse($uri, $status, $headers);
     }
 
@@ -62,7 +67,8 @@ class Response extends BaseResponse
         array $data = [],
         int $status = 200,
         array $headers = []
-    ) {
+    ): BaseResponse\RedirectResponse
+    {
         return self::redirect(Router::$instance->generateUrl($uri, $data), $status, $headers);
     }
 }

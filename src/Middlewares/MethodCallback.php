@@ -6,7 +6,6 @@ namespace Atom\Web\Middlewares;
 use Atom\DI\Exceptions\ContainerException;
 use Atom\Web\AbstractMiddleware;
 use Atom\Web\RequestHandler;
-use Laminas\Diactoros\Response\HtmlResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -56,6 +55,7 @@ class MethodCallback extends AbstractMiddleware
      * @param array $args
      * @param array $mapping
      * @return mixed
+     * @throws ContainerException
      */
     public static function call(
         $object,
@@ -64,7 +64,8 @@ class MethodCallback extends AbstractMiddleware
         RequestHandler $handler,
         array $args = [],
         array $mapping = []
-    ): ?ResponseInterface {
+    ): ?ResponseInterface
+    {
         $definition = $handler->container()->as()->callTo($method)->method()->on($object);
         return self::definitionToResponse($definition, $request, $handler, $args, $mapping);
     }

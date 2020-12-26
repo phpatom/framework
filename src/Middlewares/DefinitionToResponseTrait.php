@@ -5,9 +5,9 @@ namespace Atom\Web\Middlewares;
 
 use Atom\DI\Contracts\DefinitionContract;
 use Atom\DI\Exceptions\ContainerException;
+use Atom\Web\Request;
 use Atom\Web\RequestHandler;
 use Atom\Web\Response;
-use Laminas\Diactoros\Response\HtmlResponse;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
@@ -19,7 +19,7 @@ trait DefinitionToResponseTrait
      * @param RequestHandler $handler
      * @param array $args
      * @param array $mapping
-     * @return HtmlResponse|mixed
+     * @return mixed
      * @throws ContainerException
      */
     public static function definitionToResponse(
@@ -28,12 +28,14 @@ trait DefinitionToResponseTrait
         RequestHandler $handler,
         array $args = [],
         array $mapping = []
-    ) {
+    )
+    {
         $c = $handler->container();
         $requestStorable = $c->as()->object($request);
         $handlerStorable = $c->as()->object($handler);
         $definition
             ->with(ServerRequestInterface::class, $requestStorable)
+            ->with(Request::class, $requestStorable)
             ->with(RequestHandler::class, $handlerStorable)
             ->with(RequestHandlerInterface::class, $handlerStorable)
             ->withParameter("request", $requestStorable)

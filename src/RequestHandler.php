@@ -4,6 +4,10 @@
 namespace Atom\Web;
 
 use Atom\DI\DIC;
+use Atom\DI\Exceptions\CircularDependencyException;
+use Atom\DI\Exceptions\ContainerException;
+use Atom\DI\Exceptions\NotFoundException;
+use Atom\DI\Exceptions\StorageNotFoundException;
 use Atom\Web\Contracts\ModuleContract;
 use Atom\Web\Contracts\RendererContract;
 use Atom\Web\Events\MiddlewareLoaded;
@@ -107,14 +111,15 @@ class RequestHandler implements RequestHandlerInterface
     /**
      * @param ServerRequestInterface $request
      * @return ResponseInterface
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws NotFoundException
      * @throws RequestHandlerException
+     * @throws StorageNotFoundException
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         if (!$this->started) {
-            /**
-             * @var $module ModuleContract
-             */
             foreach ($this->moduleList as $module) {
                 /**
                  * @var $instance ModuleContract
@@ -137,6 +142,10 @@ class RequestHandler implements RequestHandlerInterface
 
     /**
      * @return MiddlewareInterface |null
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws NotFoundException
+     * @throws StorageNotFoundException
      */
     private function getCurrentMiddleware(): ?MiddlewareInterface
     {
@@ -151,8 +160,12 @@ class RequestHandler implements RequestHandlerInterface
     /**
      * @param $middleware
      * @return MiddlewareInterface | null
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws NotFoundException
+     * @throws StorageNotFoundException
      */
-    private function build($middleware): ?MiddlewareInterface
+    private function build($middleware): ?object
     {
         if (is_null($middleware)) {
             return null;
@@ -164,7 +177,14 @@ class RequestHandler implements RequestHandlerInterface
         return $instance;
     }
 
-    public function renderer()
+    /**
+     * @return RendererContract
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws NotFoundException
+     * @throws StorageNotFoundException
+     */
+    public function renderer(): RendererContract
     {
         if (!$this->renderer) {
             $this->renderer = $this->container->get(RendererContract::class);
@@ -172,6 +192,9 @@ class RequestHandler implements RequestHandlerInterface
         return $this->renderer;
     }
 
+    /**
+     * @param ResponseInterface $response
+     */
     public function emit(ResponseInterface $response): void
     {
         $emitter = new Emitter();
@@ -227,7 +250,7 @@ class RequestHandler implements RequestHandlerInterface
      * @param $index
      * @return bool
      */
-    private function isValidIndex($index)
+    private function isValidIndex($index): bool
     {
         return ($index >= 0 && $index <= count($this->middlewareList));
     }
@@ -249,7 +272,7 @@ class RequestHandler implements RequestHandlerInterface
      * @param $arg
      * @return bool
      */
-    private function isValidMiddlewareArg($arg)
+    private function isValidMiddlewareArg($arg): bool
     {
         return is_string($arg) || $arg instanceof MiddlewareInterface || is_array($arg);
     }
@@ -286,11 +309,15 @@ class RequestHandler implements RequestHandlerInterface
     }
 
     /**
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws NotFoundException
      * @throws RequestHandlerException
+     * @throws StorageNotFoundException
      */
     public function run()
     {
-        $response = $this->handle(ServerRequestFactory::fromGlobals());
+        $response = $this->handle(Request::incoming());
         $this->emit($response);
     }
 
