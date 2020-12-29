@@ -51,7 +51,8 @@ abstract class AbstractModule implements ModuleContract
         DIC $container,
         EventDispatcherContract $eventDispatcher,
         RequestHandler $requestHandler
-    ) {
+    )
+    {
         $this->router = $router;
         $this->container = $container;
         $this->eventDispatcher = $eventDispatcher;

@@ -4,6 +4,8 @@
 namespace Atom\Web;
 
 use Atom\App\App;
+use Atom\App\Contracts\ServiceProviderContract;
+use Atom\App\Env\Env;
 use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
 use Atom\DI\Exceptions\NotFoundException;
@@ -12,6 +14,8 @@ use Atom\Event\Exceptions\ListenerAlreadyAttachedToEvent;
 use Atom\Routing\CanRegisterRoute;
 use Atom\Routing\Route;
 use Atom\Routing\Router;
+use Atom\Web\Events\ServiceProviderFailed;
+use Exception;
 
 class WebApp extends App
 {
@@ -31,7 +35,7 @@ class WebApp extends App
 
     /**
      * @param string $appDir
-     * @param string|null $publicDir
+     * @param string|null $env
      * @return WebApp
      * @throws CircularDependencyException
      * @throws ContainerException
@@ -39,9 +43,51 @@ class WebApp extends App
      * @throws NotFoundException
      * @throws StorageNotFoundException
      */
-    public static function create(string $appDir, ?string $publicDir = null): WebApp
+    public static function create(string $appDir, string $env = Env::DEV): WebApp
     {
-        return (new self($appDir, $publicDir))->use(new WebServiceProvider());
+        return (new self($appDir, $env))->use(new WebServiceProvider());
+    }
+
+    /**
+     * @param string $appDir
+     * @return WebApp
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws ListenerAlreadyAttachedToEvent
+     * @throws NotFoundException
+     * @throws StorageNotFoundException
+     */
+    public static function prod(string $appDir): WebApp
+    {
+        return self::create($appDir, Env::PRODUCTION);
+    }
+
+    /**
+     * @param string $appDir
+     * @return WebApp
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws ListenerAlreadyAttachedToEvent
+     * @throws NotFoundException
+     * @throws StorageNotFoundException
+     */
+    public static function dev(string $appDir): WebApp
+    {
+        return self::create($appDir);
+    }
+
+    /**
+     * @param string $appDir
+     * @return WebApp
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws ListenerAlreadyAttachedToEvent
+     * @throws NotFoundException
+     * @throws StorageNotFoundException
+     */
+    public static function test(string $appDir): WebApp
+    {
+        return self::create($appDir, Env::TESTING);
     }
 
     /**
@@ -54,6 +100,25 @@ class WebApp extends App
     public function run()
     {
         $this->requestHandler()->run();
+    }
+
+    /**
+     * @param ServiceProviderContract $serviceProvider
+     * @return App|WebApp
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws ListenerAlreadyAttachedToEvent
+     * @throws NotFoundException
+     * @throws StorageNotFoundException
+     */
+    public function use(ServiceProviderContract $serviceProvider): App
+    {
+        try {
+            return parent::use($serviceProvider);
+        } catch (Exception $exception) {
+            $this->eventDispatcher()->dispatch(new ServiceProviderFailed($serviceProvider, $exception));
+            throw $exception;
+        }
     }
 
 
@@ -129,7 +194,7 @@ class WebApp extends App
      * @throws NotFoundException
      * @throws StorageNotFoundException
      */
-    public function add($middleware)
+    public function add($middleware): WebApp
     {
         $this->requestHandler()->add($middleware);
         return $this;
@@ -144,7 +209,7 @@ class WebApp extends App
      * @throws NotFoundException
      * @throws StorageNotFoundException
      */
-    public function load($middleware)
+    public function load($middleware): WebApp
     {
         $this->requestHandler()->load($middleware);
         return $this;
@@ -158,7 +223,7 @@ class WebApp extends App
      * @throws NotFoundException
      * @throws StorageNotFoundException
      */
-    public function addModule($module)
+    public function addModule($module): WebApp
     {
         $this->requestHandler()->addModule($module);
         return $this;

@@ -8,14 +8,15 @@ use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
 use Atom\DI\Exceptions\NotFoundException;
 use Atom\DI\Exceptions\StorageNotFoundException;
-use Atom\Web\Contracts\ModuleContract;
-use Atom\Web\Contracts\RendererContract;
-use Atom\Web\Events\MiddlewareLoaded;
-use Atom\Web\Exceptions\RequestHandlerException;
 use Atom\Routing\Contracts\RouterContract;
 use Atom\Routing\Router;
+use Atom\Web\Contracts\ModuleContract;
+use Atom\Web\Contracts\RendererContract;
+use Atom\Web\Events\AppFailed;
+use Atom\Web\Events\MiddlewareLoaded;
+use Atom\Web\Exceptions\RequestHandlerException;
 use Atom\Web\Middlewares\DispatchRoutes;
-use Laminas\Diactoros\ServerRequestFactory;
+use Exception;
 use Psr\Container\ContainerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -67,8 +68,7 @@ class RequestHandler implements RequestHandlerInterface
         ContainerInterface $container,
         EventDispatcherInterface $eventDispatcher,
         RouterContract $router
-    )
-    {
+    ) {
         $this->eventDispatcher = $eventDispatcher;
         $this->container = $container;
         $this->router = $router;
@@ -119,25 +119,30 @@ class RequestHandler implements RequestHandlerInterface
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
-        if (!$this->started) {
-            foreach ($this->moduleList as $module) {
-                /**
-                 * @var $instance ModuleContract
-                 */
-                $instance = $this->build($module);
-                $instance->bootstrap();
+        try {
+            if (!$this->started) {
+                foreach ($this->moduleList as $module) {
+                    /**
+                     * @var $instance ModuleContract
+                     */
+                    $instance = $this->build($module);
+                    $instance->bootstrap();
+                }
+                $this->add(new DispatchRoutes($this->router, $this->container()));
+                $this->started = true;
             }
-            $this->add(new DispatchRoutes($this->router, $this->container()));
-            $this->started = true;
-        }
 
-        $currentMiddleware = $this->getCurrentMiddleware();
-        $this->index++;
-        if (!is_null($currentMiddleware)) {
-            $this->eventDispatcher->dispatch(new MiddlewareLoaded($currentMiddleware));
-            $this->response = $currentMiddleware->process($request, $this);
+            $currentMiddleware = $this->getCurrentMiddleware();
+            $this->index++;
+            if (!is_null($currentMiddleware)) {
+                $this->eventDispatcher->dispatch(new MiddlewareLoaded($currentMiddleware));
+                $this->response = $currentMiddleware->process($request, $this);
+            }
+            return $this->response;
+        } catch (Exception $exception) {
+            $this->eventDispatcher->dispatch(new AppFailed($this, $exception, $request));
+            throw $exception;
         }
-        return $this->response;
     }
 
     /**
