@@ -5,7 +5,7 @@ namespace Atom\Web;
 
 use Atom\Routing\Exceptions\RouteNotFoundException;
 use Atom\Routing\Router;
-use \Laminas\Diactoros\Response as BaseResponse;
+use Laminas\Diactoros\Response as BaseResponse;
 
 class Response extends BaseResponse
 {
@@ -14,15 +14,24 @@ class Response extends BaseResponse
         int $status = 200,
         array $headers = [],
         int $encodingOptions = BaseResponse\JsonResponse::DEFAULT_JSON_FLAGS
-    ) {
+    ): BaseResponse\JsonResponse {
         return new BaseResponse\JsonResponse($data, $status, $headers, $encodingOptions);
+    }
+
+    public static function jsonString(
+        string $data,
+        int $status = 200,
+        array $headers = [],
+        int $encodingOptions = BaseResponse\JsonResponse::DEFAULT_JSON_FLAGS
+    ): JsonStringResponse {
+        return new JsonStringResponse($data, $status, $headers, $encodingOptions);
     }
 
     public static function html(
         $data,
         int $status = 200,
         array $headers = []
-    ) {
+    ): BaseResponse\HtmlResponse {
         return new BaseResponse\HtmlResponse($data, $status, $headers);
     }
 
@@ -30,14 +39,14 @@ class Response extends BaseResponse
         $data,
         int $status = 200,
         array $headers = []
-    ) {
+    ): BaseResponse\TextResponse {
         return new BaseResponse\TextResponse($data, $status, $headers);
     }
 
     public static function empty(
         int $status = 200,
         array $headers = []
-    ) {
+    ): BaseResponse\EmptyResponse {
         return new BaseResponse\EmptyResponse($status, $headers);
     }
 
@@ -45,7 +54,7 @@ class Response extends BaseResponse
         $uri,
         int $status = 200,
         array $headers = []
-    ) {
+    ): BaseResponse\RedirectResponse {
         return new BaseResponse\RedirectResponse($uri, $status, $headers);
     }
 
@@ -62,7 +71,7 @@ class Response extends BaseResponse
         array $data = [],
         int $status = 200,
         array $headers = []
-    ) {
+    ): BaseResponse\RedirectResponse {
         return self::redirect(Router::$instance->generateUrl($uri, $data), $status, $headers);
     }
 }

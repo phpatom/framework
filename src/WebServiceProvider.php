@@ -8,6 +8,7 @@ use Atom\DI\DIC;
 use Atom\DI\Exceptions\StorageNotFoundException;
 use Atom\Routing\Contracts\RouterContract;
 use Atom\Routing\Router;
+use Atom\Web\Contracts\RendererContract;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
@@ -21,6 +22,7 @@ class WebServiceProvider implements ServiceProviderContract
     public function register(App $app)
     {
         $c = $app->container();
+        $app->env()->dotEnv()->safeLoad();
         $c->singletons()->store(ContainerInterface::class, $c->as()->object($c));
         $this->provideApp($c, $app);
         $this->provideRequestHandler($c);
@@ -51,6 +53,9 @@ class WebServiceProvider implements ServiceProviderContract
         foreach ($routerAliases as $alias) {
             $c->singletons()->store($alias, $c->as()->object($router));
         }
+        $c->resolved(RendererContract::class, function (RendererContract $renderer) use ($router) {
+            $renderer->addExtensions(new RoutingExtensionProvider($router));
+        });
     }
 
     /**

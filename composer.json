@@ -1,38 +1,49 @@
 {
-    "name": "phpatom/web",
-    "description": "The web component for the atom framework",
-    "keywords": ["atom", "http","psr7","web","psr17","middleware"],
-    "license": "MIT",
-    "type": "library",
-    "require": {
-        "phpatom/app": "^0.1",
-        "laminas/laminas-diactoros": "^2.3@dev",
-        "phpatom/routing": "^0.1",
-        "psr/http-server-middleware": "^1.0@dev",
-        "phpatom/validation": "^0.1"
+  "name": "phpatom/web",
+  "description": "The web component for the atom framework",
+  "keywords": [
+    "atom",
+    "http",
+    "psr7",
+    "web",
+    "psr17",
+    "middleware"
+  ],
+  "license": "MIT",
+  "type": "library",
+  "require": {
+    "phpatom/app": "^0.1",
+    "laminas/laminas-diactoros": "^2.3@dev",
+    "phpatom/routing": "^0.1",
+    "psr/http-server-middleware": "^1.0@dev",
+    "willdurand/negotiation": "^3.0",
+    "ext-json": "*"
+  },
+  "require-dev": {
+    "squizlabs/php_codesniffer": "3.*",
+    "phpunit/phpunit": "^9.2"
+  },
+  "authors": [
+    {
+      "name": "Nghokeng daniel",
+      "email": "nghokend@gmail.com"
+    }
+  ],
+  "scripts": {
+    "test": "phpunit --coverage-clover=coverage.xml"
+  },
+  "autoload": {
+    "psr-4": {
+      "Atom\\Web\\": "src"
     },
-    "require-dev": {
-        "squizlabs/php_codesniffer": "3.*",
-        "phpunit/phpunit": "^9.2"
-    },
-    "authors": [
-        {
-            "name": "Nghokeng daniel",
-            "email": "nghokend@gmail.com"
-        }
-    ],
-    "scripts": {
-        "test": "phpunit --coverage-clover=coverage.xml"
-    },
-    "autoload": {
-        "psr-4": {
-            "Atom\\Web\\": "src"
-        }
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Atom\\Web\\Tests\\": "tests"
-        }
-    },
-    "minimum-stability": "stable"
+    "files": [
+      "src/helpers.php"
+    ]
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Atom\\Web\\Test\\": "tests"
+    }
+  },
+  "minimum-stability": "stable"
 }

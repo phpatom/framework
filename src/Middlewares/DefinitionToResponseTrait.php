@@ -5,9 +5,10 @@ namespace Atom\Web\Middlewares;
 
 use Atom\DI\Contracts\DefinitionContract;
 use Atom\DI\Exceptions\ContainerException;
+use Atom\Web\Contracts\RendererContract;
+use Atom\Web\Request;
 use Atom\Web\RequestHandler;
 use Atom\Web\Response;
-use Laminas\Diactoros\Response\HtmlResponse;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
@@ -19,7 +20,7 @@ trait DefinitionToResponseTrait
      * @param RequestHandler $handler
      * @param array $args
      * @param array $mapping
-     * @return HtmlResponse|mixed
+     * @return mixed
      * @throws ContainerException
      */
     public static function definitionToResponse(
@@ -34,10 +35,12 @@ trait DefinitionToResponseTrait
         $handlerStorable = $c->as()->object($handler);
         $definition
             ->with(ServerRequestInterface::class, $requestStorable)
+            ->with(Request::class, $requestStorable)
             ->with(RequestHandler::class, $handlerStorable)
             ->with(RequestHandlerInterface::class, $handlerStorable)
             ->withParameter("request", $requestStorable)
-            ->withParameter("handler", $handlerStorable)
+            ->withParameter("renderer", $c->as()->get(RendererContract::class))
+            ->withParameter("requestHandler", $handlerStorable)
             ->withParameter("r", $requestStorable)
             ->withParameter("h", $handlerStorable);
         foreach ($args as $name => $value) {

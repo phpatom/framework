@@ -2,6 +2,10 @@
 
 namespace Atom\Web\Middlewares;
 
+use Atom\DI\Exceptions\CircularDependencyException;
+use Atom\DI\Exceptions\ContainerException;
+use Atom\DI\Exceptions\NotFoundException;
+use Atom\DI\Exceptions\StorageNotFoundException;
 use Atom\Web\AbstractMiddleware;
 use Atom\Web\Exceptions\RequestHandlerException;
 use Atom\Web\RequestHandler;
@@ -18,7 +22,6 @@ class Pipeline extends AbstractMiddleware
 
     public function __construct(array $middlewares)
     {
-
         $this->middlewares = $middlewares;
     }
 
@@ -27,6 +30,10 @@ class Pipeline extends AbstractMiddleware
      * @param RequestHandler $handler
      * @return ResponseInterface
      * @throws RequestHandlerException
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws NotFoundException
+     * @throws StorageNotFoundException
      */
     public function run(ServerRequestInterface $request, RequestHandler $handler): ResponseInterface
     {
@@ -34,7 +41,7 @@ class Pipeline extends AbstractMiddleware
         return $handler->handle($request);
     }
 
-    public static function create(array $middlewares)
+    public static function create(array $middlewares): Pipeline
     {
         return new self($middlewares);
     }

@@ -2,9 +2,11 @@
 
 namespace Atom\Web\Contracts;
 
-use Psr\Http\Message\ResponseInterface;
-
 interface RendererContract
 {
-    public function render(string $path, array $args = []):ResponseInterface;
+    public function addGlobal(array $data);
+
+    public function render(string $template, array $args = []): string;
+
+    public function addExtensions(RendererExtensionProvider $extensionProvider);
 }

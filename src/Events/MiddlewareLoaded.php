@@ -18,7 +18,7 @@ class MiddlewareLoaded extends AbstractEvent
         $this->middleware = $middleware;
     }
 
-    public function getRelatedMiddleware()
+    public function getRelatedMiddleware(): MiddlewareInterface
     {
         return $this->middleware;
     }
