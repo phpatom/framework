@@ -15,7 +15,7 @@ use Laminas\Diactoros\Response\TextResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-abstract class AbstractController extends AbstractMiddleware
+abstract class AbstractPage extends AbstractMiddleware
 {
     /**
      * @var RequestHandler
@@ -49,15 +49,21 @@ abstract class AbstractController extends AbstractMiddleware
     /**
      * @param string $view
      * @param array $data
+     * @param int $statusCode
+     * @param array $headers
      * @return ResponseInterface
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
      * @throws StorageNotFoundException
      */
-    protected function render(string $view, array $data = []): ResponseInterface
-    {
-        return $this->handler->renderer()->render($view, $data);
+    protected function render(
+        string $view,
+        array $data = [],
+        int $statusCode = 200,
+        array $headers = []
+    ): ResponseInterface {
+        return Response::html($this->handler->renderer()->render($view, $data), $statusCode, $headers);
     }
 
     public function json($data, int $status = 200, array $headers = []): JsonResponse
