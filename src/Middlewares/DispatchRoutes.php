@@ -100,7 +100,12 @@ class DispatchRoutes extends AbstractMiddleware
         if (is_array($routeHandler) && (count($routeHandler) == 2)) {
             $controller = $routeHandler[0];
             $method = $routeHandler[1];
-            return new MethodCallback($controller, $method, []);
+            return new MethodCallback(
+                $controller, 
+                $method,
+                array_merge(["match" => $matchedRoute], $matchedRoute->getParameters()),
+                [MatchedRoute::class => $matchedRoute]
+            );
         }
         throw new InvalidRouteHandlerException($matchedRoute);
     }
