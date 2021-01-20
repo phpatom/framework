@@ -1,6 +1,6 @@
 <?php
 
-namespace Atom\Web\Contracts;
+namespace Atom\Framework\Contracts;
 
 interface ModuleContract
 {

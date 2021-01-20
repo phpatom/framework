@@ -1,10 +1,11 @@
 <?php
 
 
-namespace Atom\Web\Events;
+namespace Atom\Framework\Events;
 
-use Atom\App\Contracts\ServiceProviderContract;
+use Atom\Kernel\Contracts\ServiceProviderContract;
 use Atom\Event\AbstractEvent;
+use Throwable;
 
 class ServiceProviderFailed extends AbstractEvent
 {
@@ -13,20 +14,20 @@ class ServiceProviderFailed extends AbstractEvent
      */
     private $contract;
     /**
-     * @var \Throwable
+     * @var Throwable
      */
     private $exception;
 
-    public function __construct(ServiceProviderContract $contract, \Throwable $exception)
+    public function __construct(ServiceProviderContract $contract, Throwable $exception)
     {
         $this->contract = $contract;
         $this->exception = $exception;
     }
 
     /**
-     * @return \Throwable
+     * @return Throwable
      */
-    public function getException(): \Throwable
+    public function getException(): Throwable
     {
         return $this->exception;
     }

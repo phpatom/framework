@@ -1,6 +1,6 @@
 <?php
 
-namespace Atom\Web;
+namespace Atom\Framework;
 
 use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
@@ -15,7 +15,7 @@ use Laminas\Diactoros\Response\TextResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-abstract class AbstractPage extends AbstractMiddleware
+abstract class AbstractRouteHandler extends AbstractMiddleware
 {
     /**
      * @var RequestHandler

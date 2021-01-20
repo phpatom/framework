@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Atom\Web\Events;
+namespace Atom\Framework\Events;
 
 use Atom\Event\AbstractEvent;
 use Psr\Http\Server\MiddlewareInterface;

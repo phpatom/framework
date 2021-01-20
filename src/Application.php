@@ -1,11 +1,11 @@
 <?php
 
 
-namespace Atom\Web;
+namespace Atom\Framework;
 
-use Atom\App\App;
-use Atom\App\Contracts\ServiceProviderContract;
-use Atom\App\Env\Env;
+use Atom\Kernel\Kernel;
+use Atom\Kernel\Contracts\ServiceProviderContract;
+use Atom\Kernel\Env\Env;
 use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
 use Atom\DI\Exceptions\NotFoundException;
@@ -14,10 +14,10 @@ use Atom\Event\Exceptions\ListenerAlreadyAttachedToEvent;
 use Atom\Routing\CanRegisterRoute;
 use Atom\Routing\Route;
 use Atom\Routing\Router;
-use Atom\Web\Events\ServiceProviderFailed;
+use Atom\Framework\Events\ServiceProviderFailed;
 use Exception;
 
-class WebApp extends App
+class Application extends Kernel
 {
     use CanRegisterRoute {
         create as public route;
@@ -36,56 +36,56 @@ class WebApp extends App
     /**
      * @param string $appDir
      * @param string|null $env
-     * @return WebApp
+     * @return Application
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
      * @throws StorageNotFoundException
      */
-    public static function create(string $appDir, string $env = Env::DEV): WebApp
+    public static function create(string $appDir, string $env = Env::DEV): Application
     {
         return (new self($appDir, $env))->use(new WebServiceProvider());
     }
 
     /**
      * @param string $appDir
-     * @return WebApp
+     * @return Application
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
      * @throws StorageNotFoundException
      */
-    public static function prod(string $appDir): WebApp
+    public static function prod(string $appDir): Application
     {
         return self::create($appDir, Env::PRODUCTION);
     }
 
     /**
      * @param string $appDir
-     * @return WebApp
+     * @return Application
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
      * @throws StorageNotFoundException
      */
-    public static function dev(string $appDir): WebApp
+    public static function dev(string $appDir): Application
     {
         return self::create($appDir);
     }
 
     /**
      * @param string $appDir
-     * @return WebApp
+     * @return Application
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
      * @throws StorageNotFoundException
      */
-    public static function test(string $appDir): WebApp
+    public static function test(string $appDir): Application
     {
         return self::create($appDir, Env::TESTING);
     }
@@ -104,14 +104,14 @@ class WebApp extends App
 
     /**
      * @param ServiceProviderContract $serviceProvider
-     * @return App|WebApp
+     * @return Kernel|Application
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
      * @throws StorageNotFoundException
      */
-    public function use(ServiceProviderContract $serviceProvider): App
+    public function use(ServiceProviderContract $serviceProvider): Kernel
     {
         try {
             return parent::use($serviceProvider);
@@ -154,7 +154,7 @@ class WebApp extends App
 
     /**
      * @param array $modules
-     * @return WebApp
+     * @return Application
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
@@ -172,7 +172,7 @@ class WebApp extends App
      * @param string $prefix
      * @param callable $callable
      * @param $handler
-     * @return WebApp
+     * @return Application
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
@@ -187,14 +187,14 @@ class WebApp extends App
 
     /**
      * @param $middleware
-     * @return WebApp
+     * @return Application
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws Exceptions\RequestHandlerException
      * @throws NotFoundException
      * @throws StorageNotFoundException
      */
-    public function add($middleware): WebApp
+    public function add($middleware): Application
     {
         $this->requestHandler()->add($middleware);
         return $this;
@@ -202,14 +202,14 @@ class WebApp extends App
 
     /**
      * @param $middleware
-     * @return WebApp
+     * @return Application
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws Exceptions\RequestHandlerException
      * @throws NotFoundException
      * @throws StorageNotFoundException
      */
-    public function load($middleware): WebApp
+    public function load($middleware): Application
     {
         $this->requestHandler()->load($middleware);
         return $this;
@@ -217,13 +217,13 @@ class WebApp extends App
 
     /**
      * @param $module
-     * @return WebApp
+     * @return Application
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
      * @throws StorageNotFoundException
      */
-    public function addModule($module): WebApp
+    public function addModule($module): Application
     {
         $this->requestHandler()->addModule($module);
         return $this;

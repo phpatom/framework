@@ -1,15 +1,13 @@
 <?php
 
 
-namespace Atom\Web\Middlewares;
+namespace Atom\Framework\Middlewares;
 
 use Atom\DI\Exceptions\ContainerException;
-use Atom\Web\AbstractMiddleware;
-use Atom\Web\RequestHandler;
-use Laminas\Diactoros\Response\HtmlResponse;
+use Atom\Framework\AbstractMiddleware;
+use Atom\Framework\RequestHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\RequestHandlerInterface;
 
 class FunctionCallback extends AbstractMiddleware
 {
@@ -62,6 +60,7 @@ class FunctionCallback extends AbstractMiddleware
      * @param array $args
      * @param array $mapping
      * @return mixed
+     * @throws ContainerException
      */
     public static function call(
         callable $callable,

@@ -1,6 +1,6 @@
 <?php
 
-namespace Atom\Web;
+namespace Atom\Framework;
 
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;

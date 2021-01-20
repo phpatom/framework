@@ -1,11 +1,11 @@
 <?php
 
 
-namespace Atom\Web\Middlewares;
+namespace Atom\Framework\Middlewares;
 
 use Atom\DI\Exceptions\ContainerException;
-use Atom\Web\AbstractMiddleware;
-use Atom\Web\RequestHandler;
+use Atom\Framework\AbstractMiddleware;
+use Atom\Framework\RequestHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 

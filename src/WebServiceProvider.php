@@ -1,14 +1,14 @@
 <?php
 
-namespace Atom\Web;
+namespace Atom\Framework;
 
-use Atom\App\App;
-use Atom\App\Contracts\ServiceProviderContract;
+use Atom\Kernel\Contracts\ServiceProviderContract;
 use Atom\DI\DIC;
 use Atom\DI\Exceptions\StorageNotFoundException;
+use Atom\Kernel\Kernel;
 use Atom\Routing\Contracts\RouterContract;
 use Atom\Routing\Router;
-use Atom\Web\Contracts\RendererContract;
+use Atom\Framework\Contracts\RendererContract;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
@@ -16,10 +16,10 @@ class WebServiceProvider implements ServiceProviderContract
 {
 
     /**
-     * @param App $app
+     * @param Kernel $app
      * @throws StorageNotFoundException
      */
-    public function register(App $app)
+    public function register(Kernel $app)
     {
         $c = $app->container();
         $app->env()->dotEnv()->safeLoad();
@@ -60,12 +60,12 @@ class WebServiceProvider implements ServiceProviderContract
 
     /**
      * @param DIC $c
-     * @param App $app
+     * @param Kernel $kernel
      * @throws StorageNotFoundException
      */
-    private function provideApp(DIC $c, App $app)
+    private function provideApp(DIC $c, Kernel $kernel)
     {
-        $c->singletons()->store(WebApp::class, $c->as()->object($app));
+        $c->singletons()->store(Application::class, $c->as()->object($kernel));
     }
 
     /**

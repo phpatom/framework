@@ -1,13 +1,13 @@
 <?php
 
-namespace Atom\Web;
+namespace Atom\Framework;
 
 use Atom\DI\DIC;
 use Atom\Event\Contracts\EventDispatcherContract;
 use Atom\Event\EventDispatcher;
 use Atom\Routing\Contracts\RouterContract;
 use Atom\Routing\Router;
-use Atom\Web\Contracts\ModuleContract;
+use Atom\Framework\Contracts\ModuleContract;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
@@ -66,11 +66,11 @@ abstract class AbstractModule implements ModuleContract
     {
 
         $this->setup($this->container);
-        $this->addRoutes($this->router);
-        $this->addEventListeners($this->eventDispatcher);
+        $this->routes($this->router);
+        $this->events($this->eventDispatcher);
     }
 
-    abstract protected function addRoutes(RouterContract $router);
+    abstract protected function routes(RouterContract $router);
 
     public function getModuleName(): string
     {
@@ -82,7 +82,7 @@ abstract class AbstractModule implements ModuleContract
         return $this->moduleDescription ?? self::class;
     }
 
-    protected function addEventListeners(EventDispatcherContract $eventDispatcher)
+    protected function events(EventDispatcherContract $eventDispatcher)
     {
     }
 

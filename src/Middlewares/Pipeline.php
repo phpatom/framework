@@ -1,14 +1,14 @@
 <?php
 
-namespace Atom\Web\Middlewares;
+namespace Atom\Framework\Middlewares;
 
 use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
 use Atom\DI\Exceptions\NotFoundException;
 use Atom\DI\Exceptions\StorageNotFoundException;
-use Atom\Web\AbstractMiddleware;
-use Atom\Web\Exceptions\RequestHandlerException;
-use Atom\Web\RequestHandler;
+use Atom\Framework\AbstractMiddleware;
+use Atom\Framework\Exceptions\RequestHandlerException;
+use Atom\Framework\RequestHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Atom\Web\Exceptions;
+namespace Atom\Framework\Exceptions;
 
 use Atom\Routing\Contracts\RouteContract;
 use Atom\Routing\MatchedRoute;

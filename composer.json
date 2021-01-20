@@ -1,5 +1,5 @@
 {
-  "name": "phpatom/web",
+  "name": "phpatom/framework",
   "description": "The web component for the atom framework",
   "keywords": [
     "atom",
@@ -12,7 +12,8 @@
   "license": "MIT",
   "type": "library",
   "require": {
-    "phpatom/app": "^0.1",
+    "php": "^7.3",
+    "phpatom/kernel": "^0.1",
     "laminas/laminas-diactoros": "^2.3@dev",
     "phpatom/routing": "^0.1",
     "psr/http-server-middleware": "^1.0@dev",
@@ -34,7 +35,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Atom\\Web\\": "src"
+      "Atom\\Framework\\": "src"
     },
     "files": [
       "src/helpers.php"
@@ -42,7 +43,7 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "Atom\\Web\\Test\\": "tests"
+      "Atom\\Framework\\Test\\": "tests"
     }
   },
   "minimum-stability": "stable"

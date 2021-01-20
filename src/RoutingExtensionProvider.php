@@ -1,10 +1,10 @@
 <?php
 
 
-namespace Atom\Web;
+namespace Atom\Framework;
 
 use Atom\Routing\Router;
-use Atom\Web\Contracts\RendererExtensionProvider;
+use Atom\Framework\Contracts\RendererExtensionProvider;
 
 class RoutingExtensionProvider implements RendererExtensionProvider
 {
