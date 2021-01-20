@@ -1,6 +1,6 @@
 <?php
 
-namespace Atom\Framework;
+namespace Atom\Web;
 
 use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;

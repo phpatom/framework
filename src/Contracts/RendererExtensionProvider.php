@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Atom\Framework\Contracts;
+namespace Atom\Web\Contracts;
 
 interface RendererExtensionProvider
 {

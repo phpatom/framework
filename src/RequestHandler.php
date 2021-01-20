@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Atom\Framework;
+namespace Atom\Web;
 
 use Atom\DI\DIC;
 use Atom\DI\Exceptions\CircularDependencyException;
@@ -10,12 +10,12 @@ use Atom\DI\Exceptions\NotFoundException;
 use Atom\DI\Exceptions\StorageNotFoundException;
 use Atom\Routing\Contracts\RouterContract;
 use Atom\Routing\Router;
-use Atom\Framework\Contracts\ModuleContract;
-use Atom\Framework\Contracts\RendererContract;
-use Atom\Framework\Events\AppFailed;
-use Atom\Framework\Events\MiddlewareLoaded;
-use Atom\Framework\Exceptions\RequestHandlerException;
-use Atom\Framework\Middlewares\DispatchRoutes;
+use Atom\Web\Contracts\ModuleContract;
+use Atom\Web\Contracts\RendererContract;
+use Atom\Web\Events\AppFailed;
+use Atom\Web\Events\MiddlewareLoaded;
+use Atom\Web\Exceptions\RequestHandlerException;
+use Atom\Web\Middlewares\DispatchRoutes;
 use Exception;
 use Psr\Container\ContainerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;

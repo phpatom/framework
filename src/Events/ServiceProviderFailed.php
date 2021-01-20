@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Atom\Framework\Events;
+namespace Atom\Web\Events;
 
 use Atom\Kernel\Contracts\ServiceProviderContract;
 use Atom\Event\AbstractEvent;

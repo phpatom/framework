@@ -1,13 +1,13 @@
 <?php
 
-namespace Atom\Framework;
+namespace Atom\Web;
 
 use Atom\DI\DIC;
 use Atom\Event\Contracts\EventDispatcherContract;
 use Atom\Event\EventDispatcher;
 use Atom\Routing\Contracts\RouterContract;
 use Atom\Routing\Router;
-use Atom\Framework\Contracts\ModuleContract;
+use Atom\Web\Contracts\ModuleContract;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 

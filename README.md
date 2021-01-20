@@ -5,7 +5,7 @@
 
 use Atom\Routing\MatchedRoute;
 use Atom\Routing\Router;
-use Atom\Framework\Application;
+use Atom\Web\Application;
 use Psr\Http\Message\ServerRequestInterface;
 
 require_once "vendor/autoload.php";

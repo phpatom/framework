@@ -1,6 +1,6 @@
 <?php
 
-namespace Atom\Framework;
+namespace Atom\Web;
 
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;

@@ -1,11 +1,11 @@
 <?php
 
 
-namespace Atom\Framework\Events;
+namespace Atom\Web\Events;
 
 use Atom\Event\AbstractEvent;
-use Atom\Framework\Request;
-use Atom\Framework\RequestHandler;
+use Atom\Web\Request;
+use Atom\Web\RequestHandler;
 use Exception;
 use Psr\Http\Message\ServerRequestInterface;
 

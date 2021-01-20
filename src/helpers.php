@@ -6,7 +6,7 @@ use Atom\DI\Exceptions\ContainerException;
 use Atom\DI\Exceptions\NotFoundException;
 use Atom\DI\Exceptions\StorageNotFoundException;
 use Atom\Event\Exceptions\ListenerAlreadyAttachedToEvent;
-use Atom\Framework\Application;
+use Atom\Web\Application;
 
 if (!function_exists("atom")) {
     /**

@@ -1,5 +1,5 @@
-{
-  "name": "phpatom/framework",
+ {
+  "name": "phpatom/web",
   "description": "The web component for the atom framework",
   "keywords": [
     "atom",
@@ -35,7 +35,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Atom\\Framework\\": "src"
+      "Atom\\Web\\": "src"
     },
     "files": [
       "src/helpers.php"
@@ -43,7 +43,7 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "Atom\\Framework\\Test\\": "tests"
+      "Atom\\Web\\Test\\": "tests"
     }
   },
   "minimum-stability": "stable"

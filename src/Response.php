@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Atom\Framework;
+namespace Atom\Web;
 
 use Atom\Routing\Exceptions\RouteNotFoundException;
 use Atom\Routing\Router;

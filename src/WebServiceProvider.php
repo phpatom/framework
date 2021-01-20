@@ -1,6 +1,6 @@
 <?php
 
-namespace Atom\Framework;
+namespace Atom\Web;
 
 use Atom\Kernel\Contracts\ServiceProviderContract;
 use Atom\DI\DIC;
@@ -8,7 +8,7 @@ use Atom\DI\Exceptions\StorageNotFoundException;
 use Atom\Kernel\Kernel;
 use Atom\Routing\Contracts\RouterContract;
 use Atom\Routing\Router;
-use Atom\Framework\Contracts\RendererContract;
+use Atom\Web\Contracts\RendererContract;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Atom\Framework;
+namespace Atom\Web;
 
 trait Format
 {

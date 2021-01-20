@@ -1,5 +1,5 @@
 <?php
-namespace Atom\Framework\Exceptions;
+namespace Atom\Web\Exceptions;
 
 class RequestHandlerException extends \Exception
 {

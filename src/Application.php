@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Atom\Framework;
+namespace Atom\Web;
 
 use Atom\Kernel\Kernel;
 use Atom\Kernel\Contracts\ServiceProviderContract;
@@ -14,7 +14,7 @@ use Atom\Event\Exceptions\ListenerAlreadyAttachedToEvent;
 use Atom\Routing\CanRegisterRoute;
 use Atom\Routing\Route;
 use Atom\Routing\Router;
-use Atom\Framework\Events\ServiceProviderFailed;
+use Atom\Web\Events\ServiceProviderFailed;
 use Exception;
 
 class Application extends Kernel

@@ -1,11 +1,11 @@
 <?php
 
 
-namespace Atom\Framework\Tests;
+namespace Atom\Web\Tests;
 
 use Atom\Kernel\Kernel;
 use Atom\Routing\Contracts\RouterContract;
-use Atom\Framework\Application;
+use Atom\Web\Application;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Server\RequestHandlerInterface;
 

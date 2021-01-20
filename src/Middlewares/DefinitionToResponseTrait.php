@@ -1,14 +1,14 @@
 <?php
 
 
-namespace Atom\Framework\Middlewares;
+namespace Atom\Web\Middlewares;
 
 use Atom\DI\Contracts\DefinitionContract;
 use Atom\DI\Exceptions\ContainerException;
-use Atom\Framework\Contracts\RendererContract;
-use Atom\Framework\Request;
-use Atom\Framework\RequestHandler;
-use Atom\Framework\Response;
+use Atom\Web\Contracts\RendererContract;
+use Atom\Web\Request;
+use Atom\Web\RequestHandler;
+use Atom\Web\Response;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
