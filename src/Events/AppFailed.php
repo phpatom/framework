@@ -4,8 +4,8 @@
 namespace Atom\Web\Events;
 
 use Atom\Event\AbstractEvent;
-use Atom\Web\Request;
-use Atom\Web\RequestHandler;
+use Atom\Web\Http\Request;
+use Atom\Web\Http\RequestHandler;
 use Exception;
 use Psr\Http\Message\ServerRequestInterface;
 

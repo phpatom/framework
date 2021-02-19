@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Atom\Web;
+namespace Atom\Web\Http;
 
 use Atom\Routing\MatchedRoute;
 use Laminas\Diactoros\ServerRequest;
@@ -35,7 +35,7 @@ class Request extends ServerRequest
             $request->getHeaders(),
             $request->getCookieParams(),
             $request->getQueryParams(),
-            $request->getBody(),
+            $request->getParsedBody(),
             $request->getProtocolVersion()
         );
         foreach ($request->getAttributes() as $k => $v) {

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Atom\Web;
+namespace Atom\Web\Http;
 
 use Laminas\Diactoros\Response;
 use Laminas\Diactoros\Response\InjectContentTypeTrait;

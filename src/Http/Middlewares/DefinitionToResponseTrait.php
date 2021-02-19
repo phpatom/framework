@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Atom\Web\Middlewares;
+namespace Atom\Web\Http\Middlewares;
 
 use Atom\DI\Contracts\DefinitionContract;
 use Atom\DI\Exceptions\ContainerException;
@@ -29,20 +29,19 @@ trait DefinitionToResponseTrait
         RequestHandler $handler,
         array $args = [],
         array $mapping = []
-    ) {
+    )
+    {
         $c = $handler->container();
         $requestStorable = $c->as()->object($request);
         $handlerStorable = $c->as()->object($handler);
+        $c->bindings()->store(ServerRequestInterface::class, $requestStorable);
+        $c->bindings()->store(Request::class, $requestStorable);
+
         $definition
-            ->with(ServerRequestInterface::class, $requestStorable)
-            ->with(Request::class, $requestStorable)
             ->with(RequestHandler::class, $handlerStorable)
             ->with(RequestHandlerInterface::class, $handlerStorable)
-            ->withParameter("request", $requestStorable)
             ->withParameter("renderer", $c->as()->get(RendererContract::class))
-            ->withParameter("requestHandler", $handlerStorable)
-            ->withParameter("r", $requestStorable)
-            ->withParameter("h", $handlerStorable);
+            ->withParameter("requestHandler", $handlerStorable);
         foreach ($args as $name => $value) {
             $definition->withParameter($name, $c->as()->value($value));
         }

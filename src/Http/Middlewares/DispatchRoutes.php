@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Atom\Web\Middlewares;
+namespace Atom\Web\Http\Middlewares;
 
 use Atom\DI\DIC;
 use Atom\DI\Exceptions\CircularDependencyException;
@@ -10,10 +10,9 @@ use Atom\DI\Exceptions\NotFoundException;
 use Atom\DI\Exceptions\StorageNotFoundException;
 use Atom\Routing\Contracts\RouterContract;
 use Atom\Routing\MatchedRoute;
-use Atom\Web\AbstractMiddleware;
 use Atom\Web\Exceptions\InvalidRouteHandlerException;
 use Atom\Web\Exceptions\RequestHandlerException;
-use Atom\Web\RequestHandler;
+use Atom\Web\Http\RequestHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -80,7 +79,8 @@ class DispatchRoutes extends AbstractMiddleware
         $routeHandler,
         MatchedRoute $matchedRoute,
         DIC $dic
-    ): ?MiddlewareInterface {
+    ): ?MiddlewareInterface
+    {
         if ($routeHandler == null) {
             return null;
         }
@@ -101,7 +101,7 @@ class DispatchRoutes extends AbstractMiddleware
             $controller = $routeHandler[0];
             $method = $routeHandler[1];
             return new MethodCallback(
-                $controller, 
+                $controller,
                 $method,
                 array_merge(["match" => $matchedRoute], $matchedRoute->getParameters()),
                 [MatchedRoute::class => $matchedRoute]

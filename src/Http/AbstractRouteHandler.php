@@ -1,12 +1,13 @@
 <?php
 
-namespace Atom\Web;
+namespace Atom\Web\Http;
 
 use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
 use Atom\DI\Exceptions\NotFoundException;
 use Atom\DI\Exceptions\StorageNotFoundException;
 use Atom\Routing\Exceptions\RouteNotFoundException;
+use Atom\Web\AbstractMiddleware;
 use Fig\Http\Message\RequestMethodInterface;
 use Laminas\Diactoros\Response\EmptyResponse;
 use Laminas\Diactoros\Response\JsonResponse;

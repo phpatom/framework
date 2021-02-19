@@ -1,6 +1,6 @@
 <?php
 
-namespace Atom\Web;
+namespace Atom\Web\Http;
 
 use Atom\DI\DIC;
 use Atom\Event\Contracts\EventDispatcherContract;

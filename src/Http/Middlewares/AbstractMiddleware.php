@@ -1,7 +1,8 @@
 <?php
 
-namespace Atom\Web;
+namespace Atom\Web\Http\Middlewares;
 
+use Atom\Web\Http\RequestHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;

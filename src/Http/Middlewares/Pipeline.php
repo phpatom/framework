@@ -1,6 +1,6 @@
 <?php
 
-namespace Atom\Web\Middlewares;
+namespace Atom\Web\Http\Middlewares;
 
 use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;

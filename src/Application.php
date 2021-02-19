@@ -14,14 +14,19 @@ use Atom\Event\Exceptions\ListenerAlreadyAttachedToEvent;
 use Atom\Routing\CanRegisterRoute;
 use Atom\Routing\Route;
 use Atom\Routing\Router;
+use Atom\Web\Contracts\ModuleContract;
 use Atom\Web\Events\ServiceProviderFailed;
+use Atom\Web\Http\RequestHandler;
 use Exception;
+use Psr\Http\Server\MiddlewareInterface;
 
 class Application extends Kernel
 {
     use CanRegisterRoute {
         create as public route;
     }
+
+    private $providersLoaded = [];
 
     /**
      * @var RequestHandler
@@ -46,6 +51,14 @@ class Application extends Kernel
     public static function create(string $appDir, string $env = Env::DEV): Application
     {
         return (new self($appDir, $env))->use(new WebServiceProvider());
+    }
+
+    /**
+     * @return WebServiceProvider
+     */
+    public static function with(): WebServiceProvider
+    {
+        return new WebServiceProvider();
     }
 
     /**
@@ -114,11 +127,33 @@ class Application extends Kernel
     public function use(ServiceProviderContract $serviceProvider): Kernel
     {
         try {
-            return parent::use($serviceProvider);
+            if (in_array(get_class($serviceProvider), $this->providersLoaded)) {
+                return $this;
+            }
+            $res = parent::use($serviceProvider);
+            $this->providersLoaded[] = get_class($serviceProvider);
+            return $res;
         } catch (Exception $exception) {
             $this->eventDispatcher()->dispatch(new ServiceProviderFailed($serviceProvider, $exception));
             throw $exception;
         }
+    }
+
+    /**
+     * @param array $providers
+     * @return $this
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws ListenerAlreadyAttachedToEvent
+     * @throws NotFoundException
+     * @throws StorageNotFoundException
+     */
+    public function providers(array $providers): self
+    {
+        foreach ($providers as $provider) {
+            $this->use($provider);
+        }
+        return $this;
     }
 
 
@@ -162,9 +197,21 @@ class Application extends Kernel
      */
     public function withModules(array $modules): self
     {
-        foreach ($modules as $module) {
-            $this->requestHandler()->addModule($module);
-        }
+        $this->requestHandler()->withModules($modules);
+        return $this;
+    }
+
+    /**
+     * @param string|ModuleContract $module
+     * @return Application
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws NotFoundException
+     * @throws StorageNotFoundException
+     */
+    public function withModule($module): self
+    {
+        $this->requestHandler()->withModule($module);
         return $this;
     }
 
@@ -186,7 +233,7 @@ class Application extends Kernel
 
 
     /**
-     * @param $middleware
+     * @param string|MiddlewareInterface $middleware
      * @return Application
      * @throws CircularDependencyException
      * @throws ContainerException
@@ -215,18 +262,13 @@ class Application extends Kernel
         return $this;
     }
 
+
     /**
-     * @param $module
-     * @return Application
-     * @throws CircularDependencyException
-     * @throws ContainerException
-     * @throws NotFoundException
-     * @throws StorageNotFoundException
+     * @return array
      */
-    public function addModule($module): Application
+    public function getProvidersLoaded(): array
     {
-        $this->requestHandler()->addModule($module);
-        return $this;
+        return $this->providersLoaded;
     }
 
     /**

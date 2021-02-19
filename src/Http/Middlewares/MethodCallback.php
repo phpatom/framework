@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Atom\Web\Middlewares;
+namespace Atom\Web\Http\Middlewares;
 
 use Atom\DI\Exceptions\ContainerException;
 use Atom\Web\AbstractMiddleware;
@@ -64,8 +64,7 @@ class MethodCallback extends AbstractMiddleware
         RequestHandler $handler,
         array $args = [],
         array $mapping = []
-    ): ?ResponseInterface
-    {
+    ): ?ResponseInterface {
         $definition = $handler->container()->as()->callTo($method)->method()->on($object);
         return self::definitionToResponse($definition, $request, $handler, $args, $mapping);
     }
