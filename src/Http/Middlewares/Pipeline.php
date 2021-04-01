@@ -1,14 +1,12 @@
 <?php
 
-namespace Atom\Web\Http\Middlewares;
+namespace Atom\Framework\Http\Middlewares;
 
 use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
 use Atom\DI\Exceptions\NotFoundException;
-use Atom\DI\Exceptions\StorageNotFoundException;
-use Atom\Web\AbstractMiddleware;
-use Atom\Web\Exceptions\RequestHandlerException;
-use Atom\Web\RequestHandler;
+use Atom\Framework\Exceptions\RequestHandlerException;
+use Atom\Framework\Http\RequestHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -18,7 +16,7 @@ class Pipeline extends AbstractMiddleware
     /**
      * @var array
      */
-    private $middlewares;
+    private array $middlewares;
 
     public function __construct(array $middlewares)
     {
@@ -33,7 +31,6 @@ class Pipeline extends AbstractMiddleware
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
-     * @throws StorageNotFoundException
      */
     public function run(ServerRequestInterface $request, RequestHandler $handler): ResponseInterface
     {

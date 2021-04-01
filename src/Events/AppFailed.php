@@ -1,31 +1,32 @@
 <?php
 
 
-namespace Atom\Web\Events;
+namespace Atom\Framework\Events;
 
 use Atom\Event\AbstractEvent;
-use Atom\Web\Http\Request;
-use Atom\Web\Http\RequestHandler;
+use Atom\Framework\Http\Request;
+use Atom\Framework\Http\RequestHandler;
 use Exception;
 use Psr\Http\Message\ServerRequestInterface;
+use Throwable;
 
 class AppFailed extends AbstractEvent
 {
 
     /**
-     * @var Exception
+     * @var Throwable
      */
-    private $exception;
+    private Throwable $exception;
     /**
      * @var RequestHandler
      */
-    private $handler;
+    private RequestHandler $handler;
     /**
      * @var Request
      */
     private $request;
 
-    public function __construct(RequestHandler $handler, Exception $exception, ServerRequestInterface $request)
+    public function __construct(RequestHandler $handler, Throwable $exception, ServerRequestInterface $request)
     {
         $this->exception = $exception;
         $this->handler = $handler;
@@ -33,9 +34,9 @@ class AppFailed extends AbstractEvent
     }
 
     /**
-     * @return Exception
+     * @return Throwable
      */
-    public function getException(): Exception
+    public function getException(): Throwable
     {
         return $this->exception;
     }

@@ -1,9 +1,13 @@
 <?php
 
-namespace Atom\Web\Http\Emitter;
+namespace Atom\Framework\Http\Emitter;
 
 use Psr\Http\Message\ResponseInterface;
 
+/**
+ * Class SapiEmitter
+ * @source https://github.com/narrowspark/http-emitter
+ */
 final class SapiEmitter extends AbstractSapiEmitter
 {
     /**

@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Atom\Web\Http;
+namespace Atom\Framework\Http;
 
 use Laminas\Diactoros\Response;
 use Laminas\Diactoros\Response\InjectContentTypeTrait;
@@ -21,14 +21,15 @@ class JsonStringResponse extends Response
     /**
      * @var int
      */
-    private $encodingOptions;
+    private int $encodingOptions;
 
     public function __construct(
         string $data,
         int $status = 200,
         array $headers = [],
         int $encodingOptions = self::DEFAULT_JSON_FLAGS
-    ) {
+    )
+    {
         $this->setPayload($data);
         $this->encodingOptions = $encodingOptions;
         $body = $this->createBodyFromJson($data);

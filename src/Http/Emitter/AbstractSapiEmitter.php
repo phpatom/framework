@@ -1,9 +1,9 @@
 <?php
 
 
-namespace Atom\Web\Http\Emitter;
+namespace Atom\Framework\Http\Emitter;
 
-use Atom\Web\Contracts\EmitterContract;
+use Atom\Framework\Contracts\EmitterContract;
 use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
 use function count;
@@ -27,8 +27,7 @@ use const PHP_SAPI;
 
 /**
  * Class AbstractSapiEmitter
- * @source https://github.com/narrowspark/http-emitter/blob/master/src/SapiStreamEmitter.php
- * @package Atom\Web\Http\Emitter
+ * @source https://github.com/narrowspark/http-emitter
  */
 abstract class AbstractSapiEmitter implements EmitterContract
 {

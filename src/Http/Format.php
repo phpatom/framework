@@ -1,11 +1,11 @@
 <?php
 
 
-namespace Atom\Web\Http;
+namespace Atom\Framework\Http;
 
 trait Format
 {
-    public static $MIME_MAP = [
+    public static array $MIME_MAP = [
         'video/3gpp2' => '3g2',
         'video/3gp' => '3gp',
         'video/3gpp' => '3gp',

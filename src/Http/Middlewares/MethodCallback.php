@@ -1,11 +1,13 @@
 <?php
 
 
-namespace Atom\Web\Http\Middlewares;
+namespace Atom\Framework\Http\Middlewares;
 
+use Atom\DI\Definition;
+use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
-use Atom\Web\AbstractMiddleware;
-use Atom\Web\RequestHandler;
+use Atom\DI\Exceptions\NotFoundException;
+use Atom\Framework\Http\RequestHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
@@ -13,19 +15,22 @@ class MethodCallback extends AbstractMiddleware
 {
     use DefinitionToResponseTrait;
 
+    /**
+     * @var mixed $object
+     */
     private $object;
     /**
      * @var string
      */
-    private $method;
+    private string $method;
     /**
      * @var array
      */
-    private $args;
+    private array $args;
     /**
      * @var array
      */
-    private $mapping;
+    private array $mapping;
 
     public function __construct($object, string $method, array $args = [], array $mapping = [])
     {
@@ -40,7 +45,6 @@ class MethodCallback extends AbstractMiddleware
      * @param ServerRequestInterface $request
      * @param RequestHandler $handler
      * @return ResponseInterface
-     * @throws ContainerException
      */
     public function run(ServerRequestInterface $request, RequestHandler $handler): ResponseInterface
     {
@@ -55,7 +59,9 @@ class MethodCallback extends AbstractMiddleware
      * @param array $args
      * @param array $mapping
      * @return mixed
+     * @throws CircularDependencyException
      * @throws ContainerException
+     * @throws NotFoundException
      */
     public static function call(
         $object,
@@ -65,7 +71,7 @@ class MethodCallback extends AbstractMiddleware
         array $args = [],
         array $mapping = []
     ): ?ResponseInterface {
-        $definition = $handler->container()->as()->callTo($method)->method()->on($object);
+        $definition = Definition::callTo($method)->method()->on($object);
         return self::definitionToResponse($definition, $request, $handler, $args, $mapping);
     }
 }

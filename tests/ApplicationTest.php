@@ -1,53 +1,49 @@
 <?php
 
 
-namespace Atom\Web\Test;
+namespace Atom\Framework\Test;
 
-use Atom\DI\DIC;
 use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
 use Atom\DI\Exceptions\NotFoundException;
 use Atom\DI\Exceptions\StorageNotFoundException;
+use Atom\DI\Exceptions\UnsupportedInvokerException;
 use Atom\Event\AbstractEventListener;
 use Atom\Event\Exceptions\ListenerAlreadyAttachedToEvent;
-use Atom\Kernel\Contracts\ServiceProviderContract;
-use Atom\Kernel\Events\EventServiceProvider;
-use Atom\Kernel\FileSystem\DiskManagerProvider;
-use Atom\Kernel\FileSystem\PathProvider;
-use Atom\Kernel\Kernel;
-use Atom\Routing\Contracts\RouterContract;
+use Atom\Framework\ApplicationFactory;
+use Atom\Framework\Contracts\ServiceProviderContract;
+use Atom\Framework\Kernel;
 use Atom\Routing\Router;
-use Atom\Web\Application;
-use Atom\Web\Contracts\ModuleContract;
-use Atom\Web\Events\ServiceProviderFailed;
-use Atom\Web\Exceptions\RequestHandlerException;
-use Atom\Web\Http\RequestHandler;
-use Atom\Web\WebServiceProvider;
-use http\Exception\RuntimeException;
+use Atom\Framework\Application;
+use Atom\Framework\Contracts\ModuleContract;
+use Atom\Framework\Events\ServiceProviderRegistrationFailed;
+use Atom\Framework\Exceptions\RequestHandlerException;
+use Atom\Framework\Http\RequestHandler;
+use Atom\Framework\WebServiceProvider;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Server\MiddlewareInterface;
+use RuntimeException;
+use Throwable;
 
 class ApplicationTest extends TestCase
 {
     /**
-     * @throws CircularDependencyException
-     * @throws ContainerException
-     * @throws NotFoundException
      * @throws StorageNotFoundException
+     * @throws Throwable
+     * @throws UnsupportedInvokerException
      * @throws ListenerAlreadyAttachedToEvent
      */
     public function testItIsCreatedWIthWebServiceProviderWhenUsingNamedConstructor()
     {
         $app = Application::create(__DIR__);
-        $this->assertContains(WebServiceProvider::class, $app->getProvidersLoaded());
+        $this->assertTrue($app->kernel()->providerRegistered(WebServiceProvider::class));
     }
 
     /**
-     * @throws CircularDependencyException
-     * @throws ContainerException
      * @throws ListenerAlreadyAttachedToEvent
-     * @throws NotFoundException
      * @throws StorageNotFoundException
+     * @throws Throwable
+     * @throws UnsupportedInvokerException
      */
     public function testItNamedConstructors()
     {
@@ -60,7 +56,10 @@ class ApplicationTest extends TestCase
         $app = Application::test(__DIR__);
         $this->assertTrue($app->env()->isTesting());
 
-        $this->assertInstanceOf(WebServiceProvider::class, Application::with());
+        $app = Application::staging(__DIR__);
+        $this->assertTrue($app->env()->isStaging());
+
+        $this->assertInstanceOf(ApplicationFactory::class, Application::with());
     }
 
     /**
@@ -68,15 +67,19 @@ class ApplicationTest extends TestCase
      * @throws ContainerException
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
-     * @throws StorageNotFoundException
      * @throws RequestHandlerException
+     * @throws StorageNotFoundException
+     * @throws Throwable
+     * @throws UnsupportedInvokerException
      */
     public function testRun()
     {
         $mock = $this->getMockBuilder(RequestHandler::class)->disableOriginalConstructor()->getMock();
         $mock->expects($this->once())->method("run");
         $mock->method("run")->willReturn(null);
-        $app = Application::with()->requestHandler($mock)->create(__DIR__);
+        $app = Application::with()
+            ->requestHandler($mock)
+            ->create(__DIR__);
         $app->run();
     }
 
@@ -86,42 +89,40 @@ class ApplicationTest extends TestCase
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
      * @throws StorageNotFoundException
+     * @throws Throwable
+     * @throws UnsupportedInvokerException
      */
     public function testAServiceProviderCanBeUsed()
     {
         $app = Application::create(__DIR__);
         $provider = new class implements ServiceProviderContract {
-            public function register(Kernel $app)
+            public function register(Kernel $kernel)
             {
-                $app->container()->bindings()->store("foo", $app->container()->as()->value("bar"));
+                $kernel->container()->bindings()->store("foo", $kernel->container()->as()->value("bar"));
             }
         };
         $app->use($provider);
-        $loaded = $app->getProvidersLoaded();
+        $loaded = $app->kernel()->getRegisteredProviders();
         $this->assertEquals("bar", $app->container()->get("foo"));
         $app->use($provider);
-        $this->assertEquals($loaded, $app->getProvidersLoaded());
+        $this->assertEquals($loaded, $app->kernel()->getRegisteredProviders());
     }
 
     /**
-     * @throws CircularDependencyException
-     * @throws ContainerException
-     * @throws ListenerAlreadyAttachedToEvent
-     * @throws NotFoundException
-     * @throws StorageNotFoundException
+     * @throws Throwable
      */
     public function testAnEventIsEmittedWhenItFailsToUseAServiceProvider()
     {
         $app = Application::create(__DIR__);
-        $this->expectException(\RuntimeException::class);
+        $this->expectException(RuntimeException::class);
         $app->use(new class implements ServiceProviderContract {
-            public function register(Kernel $app)
+            public function register(Kernel $kernel)
             {
-                throw new \RuntimeException("Sike!");
+                throw new RuntimeException("Sike!");
             }
         });
         $listener = new class extends AbstractEventListener {
-            public function called()
+            public function called(): bool
             {
                 return $this->calls == 1;
             }
@@ -131,12 +132,22 @@ class ApplicationTest extends TestCase
             }
         };
         $app->eventDispatcher()->addEventListener(
-            ServiceProviderFailed::class,
+            ServiceProviderRegistrationFailed::class,
             $listener
         );
+        $app->kernel()->boot();
         $this->assertTrue($listener->called());
     }
 
+    /**
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws ListenerAlreadyAttachedToEvent
+     * @throws NotFoundException
+     * @throws StorageNotFoundException
+     * @throws Throwable
+     * @throws UnsupportedInvokerException
+     */
     public function testTheRequestHandlerCanBeRetrieve()
     {
         $app = Application::create(__DIR__);
@@ -144,6 +155,15 @@ class ApplicationTest extends TestCase
         $this->assertEquals($app->requestHandler(), $app->requestHandler());
     }
 
+    /**
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws ListenerAlreadyAttachedToEvent
+     * @throws NotFoundException
+     * @throws StorageNotFoundException
+     * @throws Throwable
+     * @throws UnsupportedInvokerException
+     */
     public function testTheRouterCanBeRetrieve()
     {
         $app = Application::create(__DIR__);
@@ -157,6 +177,8 @@ class ApplicationTest extends TestCase
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
      * @throws StorageNotFoundException
+     * @throws Throwable
+     * @throws UnsupportedInvokerException
      */
     public function testModulesAreAdded()
     {
@@ -175,6 +197,8 @@ class ApplicationTest extends TestCase
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
      * @throws StorageNotFoundException
+     * @throws Throwable
+     * @throws UnsupportedInvokerException
      */
     public function testAModuleCanBeAdded()
     {
@@ -185,6 +209,15 @@ class ApplicationTest extends TestCase
         $app->withModule($module);
     }
 
+    /**
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws ListenerAlreadyAttachedToEvent
+     * @throws NotFoundException
+     * @throws StorageNotFoundException
+     * @throws Throwable
+     * @throws UnsupportedInvokerException
+     */
     public function testRouteGroupAreRegistered()
     {
         $router = $this->getMockBuilder(Router::class)->getMock();
@@ -201,8 +234,10 @@ class ApplicationTest extends TestCase
      * @throws ContainerException
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
-     * @throws StorageNotFoundException
      * @throws RequestHandlerException
+     * @throws StorageNotFoundException
+     * @throws Throwable
+     * @throws UnsupportedInvokerException
      */
     public function testMiddlewareCanBeAdded()
     {
@@ -213,12 +248,15 @@ class ApplicationTest extends TestCase
         $app->add($middleware);
     }
 
-    /* @throws CircularDependencyException
+    /**
+     * @throws CircularDependencyException
      * @throws ContainerException
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
-     * @throws StorageNotFoundException
      * @throws RequestHandlerException
+     * @throws StorageNotFoundException
+     * @throws Throwable
+     * @throws UnsupportedInvokerException
      */
     public function testMiddlewareCanBeLoaded()
     {
@@ -229,17 +267,29 @@ class ApplicationTest extends TestCase
         $app->load($middleware);
     }
 
+    /**
+     * @throws ListenerAlreadyAttachedToEvent
+     * @throws StorageNotFoundException
+     * @throws Throwable
+     * @throws UnsupportedInvokerException
+     */
     public function testGetProviderLoaded()
     {
-        $app = new Application(__DIR__);
-        $providers = [EventServiceProvider::class, PathProvider::class, DiskManagerProvider::class];
-        $this->assertEquals($providers, $app->getProvidersLoaded());
+        $app = Application::create(__DIR__);
+        $providers = [WebServiceProvider::class];
+        $this->assertEquals($providers, $app->getRegisteredProviders());
     }
 
+    /**
+     * @throws ListenerAlreadyAttachedToEvent
+     * @throws StorageNotFoundException
+     * @throws Throwable
+     * @throws UnsupportedInvokerException
+     */
     public function testProvidersCanBeAdded()
     {
-        $app = new Application(__DIR__);
-        $providers = [EventServiceProvider::class, PathProvider::class, DiskManagerProvider::class];
+        $app = Application::create(__DIR__);
+        $providers = [WebServiceProvider::class];
         $provider1 = $this->createMock(ServiceProviderContract::class);
         $provider2 = $this->getMockBuilder(ServiceProviderContract::class)->getMock();
 
@@ -247,6 +297,32 @@ class ApplicationTest extends TestCase
         $this->assertEquals(array_merge($providers, [
             get_class($provider1),
             get_class($provider2)
-        ]), $app->getProvidersLoaded());
+        ]), $app->kernel()->getRegisteredProviders());
+    }
+
+    /**
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws ListenerAlreadyAttachedToEvent
+     * @throws NotFoundException
+     * @throws StorageNotFoundException
+     * @throws Throwable
+     * @throws UnsupportedInvokerException
+     */
+    public function testOf()
+    {
+        $app = Application::create(__DIR__);
+        $kernel = $app->kernel();
+        $requestHandler = $app->requestHandler();
+
+        $clone = Application::of($kernel);
+        $this->assertEquals($clone->router(), $app->router());
+        $this->assertEquals($clone->requestHandler(), $app->requestHandler());
+        $this->assertEquals($clone->env(), $app->env());
+
+        $clone2 = Application::of($requestHandler);
+        $this->assertEquals($clone2->router(), $app->router());
+        $this->assertEquals($clone2->requestHandler(), $app->requestHandler());
+        $this->assertEquals($clone2->env(), $app->env());
     }
 }

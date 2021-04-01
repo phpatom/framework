@@ -1,23 +1,26 @@
 <?php
 
 
-namespace Atom\Web\Http;
+namespace Atom\Framework\Http;
 
-use Atom\DI\DIC;
+use Atom\DI\Container;
 use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
+use Atom\DI\Exceptions\MultipleBindingException;
 use Atom\DI\Exceptions\NotFoundException;
-use Atom\DI\Exceptions\StorageNotFoundException;
+use Atom\Framework\Contracts\EmitterContract;
+use Atom\Framework\Contracts\HasKernel;
+use Atom\Framework\Contracts\ModuleContract;
+use Atom\Framework\Contracts\RendererContract;
+use Atom\Framework\Events\AppFailed;
+use Atom\Framework\Events\MiddlewareLoaded;
+use Atom\Framework\Exceptions\RequestHandlerException;
+use Atom\Framework\Http\Middlewares\DispatchRoutes;
+use Atom\Framework\Http\Middlewares\FunctionCallback;
+use Atom\Framework\Http\Middlewares\MethodCallback;
+use Atom\Framework\Kernel;
 use Atom\Routing\Contracts\RouterContract;
 use Atom\Routing\Router;
-use Atom\Web\Application;
-use Atom\Web\Contracts\EmitterContract;
-use Atom\Web\Contracts\ModuleContract;
-use Atom\Web\Contracts\RendererContract;
-use Atom\Web\Events\AppFailed;
-use Atom\Web\Events\MiddlewareLoaded;
-use Atom\Web\Exceptions\RequestHandlerException;
-use Atom\Web\Http\Middlewares\DispatchRoutes;
 use Exception;
 use Psr\Container\ContainerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -25,56 +28,63 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use ReflectionException;
 
-class RequestHandler implements RequestHandlerInterface
+class RequestHandler implements RequestHandlerInterface, HasKernel
 {
     /**
      * @var ResponseInterface
      */
-    private $response;
+    private ResponseInterface $response;
     /**
      * @var array<MiddlewareInterface>
      */
-    private $middlewareList = [];
+    private array $middlewareList = [];
 
     /**
      * @var array<ModuleContract>
      */
-    private $moduleList = [];
+    private array $moduleList = [];
     /**
      * @var int
      */
-    private $index = 0;
+    private int $index = 0;
 
     /**
      * @var EventDispatcherInterface
      */
-    private $eventDispatcher;
+    private EventDispatcherInterface $eventDispatcher;
     /**
      * @var Router
      */
     private $router;
     /**
-     * @var ContainerInterface | DIC
+     * @var ContainerInterface | Container
      */
     private $container;
 
     /**
      * @var RendererContract
      */
-    private $renderer;
+    private RendererContract $renderer;
 
-    private $started = false;
+    private bool $started = false;
 
+    /**
+     * RequestHandler constructor.
+     * @param ContainerInterface $container
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws NotFoundException
+     * @throws ReflectionException
+     */
     public function __construct(
-        ContainerInterface $container,
-        EventDispatcherInterface $eventDispatcher,
-        RouterContract $router
+        ContainerInterface $container
     )
     {
-        $this->eventDispatcher = $eventDispatcher;
         $this->container = $container;
-        $this->router = $router;
+        $this->eventDispatcher = $this->container()->get(EventDispatcherInterface::class);
+        $this->router = $this->container()->get(RouterContract::class);
     }
 
     /**
@@ -83,6 +93,18 @@ class RequestHandler implements RequestHandlerInterface
     public function router(): RouterContract
     {
         return $this->router;
+    }
+
+    /**
+     * @return Kernel
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws NotFoundException
+     * @throws ReflectionException
+     */
+    public function getKernel(): Kernel
+    {
+        return $this->container()->get(Kernel::class);
     }
 
     /**
@@ -97,8 +119,8 @@ class RequestHandler implements RequestHandlerInterface
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
+     * @throws ReflectionException
      * @throws RequestHandlerException
-     * @throws StorageNotFoundException
      */
     public function run()
     {
@@ -107,7 +129,7 @@ class RequestHandler implements RequestHandlerInterface
     }
 
     /**
-     * @return ContainerInterface | DIC
+     * @return ContainerInterface | Container
      */
     public function container(): ContainerInterface
     {
@@ -166,24 +188,13 @@ class RequestHandler implements RequestHandlerInterface
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
+     * @throws ReflectionException
      * @throws RequestHandlerException
-     * @throws StorageNotFoundException
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {
         try {
-            if (!$this->started) {
-                foreach ($this->moduleList as $module) {
-                    /**
-                     * @var $instance ModuleContract
-                     */
-                    $instance = $this->build($module);
-                    $instance->bootstrap();
-                }
-                $this->add(new DispatchRoutes($this->router, $this->container()));
-                $this->started = true;
-            }
-
+            $this->ensureStarted($request);
             $currentMiddleware = $this->getCurrentMiddleware();
             $this->index++;
             if (!is_null($currentMiddleware)) {
@@ -198,11 +209,37 @@ class RequestHandler implements RequestHandlerInterface
     }
 
     /**
+     * @param ServerRequestInterface $request
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws NotFoundException
+     * @throws ReflectionException
+     * @throws RequestHandlerException
+     * @throws MultipleBindingException
+     */
+    private function ensureStarted(ServerRequestInterface $request)
+    {
+        if ($this->started) {
+            return;
+        }
+        $this->container()->bind([ServerRequestInterface::class, get_class($request)])->toObject($request);
+        foreach ($this->moduleList as $module) {
+            /**
+             * @var $instance ModuleContract
+             */
+            $instance = $this->build($module);
+            $instance->bootstrap();
+        }
+        $this->add(new DispatchRoutes($this->router, $this->container()));
+        $this->started = true;
+    }
+
+    /**
      * @return MiddlewareInterface |null
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
-     * @throws StorageNotFoundException
+     * @throws ReflectionException
      */
     private function getCurrentMiddleware(): ?MiddlewareInterface
     {
@@ -220,7 +257,7 @@ class RequestHandler implements RequestHandlerInterface
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
-     * @throws StorageNotFoundException
+     * @throws ReflectionException
      */
     private function build($middleware): ?object
     {
@@ -231,6 +268,12 @@ class RequestHandler implements RequestHandlerInterface
         if (is_string($middleware)) {
             $instance = $this->container->get($middleware);
         }
+        if (is_callable($middleware) && !is_array($middleware)) {
+            $instance = new FunctionCallback($middleware);
+        }
+        if (is_callable($middleware) && is_array($middleware)) {
+            $instance = new MethodCallback($middleware[0], $middleware[1]);
+        }
         return $instance;
     }
 
@@ -239,7 +282,7 @@ class RequestHandler implements RequestHandlerInterface
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
-     * @throws StorageNotFoundException
+     * @throws ReflectionException
      */
     public function renderer(): RendererContract
     {
@@ -254,7 +297,7 @@ class RequestHandler implements RequestHandlerInterface
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
-     * @throws StorageNotFoundException
+     * @throws ReflectionException
      */
     public function emit(ResponseInterface $response): void
     {
@@ -263,6 +306,18 @@ class RequestHandler implements RequestHandlerInterface
          */
         $emitter = $this->container->get(EmitterContract::class);
         $emitter->emit($response);
+    }
+
+    /**
+     * @return EmitterContract
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws NotFoundException
+     * @throws ReflectionException
+     */
+    public function emitter(): EmitterContract
+    {
+        return $this->container->get(EmitterContract::class);
     }
 
     /**
@@ -338,7 +393,10 @@ class RequestHandler implements RequestHandlerInterface
      */
     private function isValidMiddlewareArg($arg): bool
     {
-        return is_string($arg) || $arg instanceof MiddlewareInterface || is_array($arg);
+        return is_string($arg)
+            || $arg instanceof MiddlewareInterface
+            || is_array($arg)
+            || is_callable($arg);
     }
 
     /**
@@ -354,5 +412,23 @@ class RequestHandler implements RequestHandlerInterface
             return "array";
         }
         return get_class($middleware);
+    }
+
+    /**
+     * @return ResponseSender
+     */
+    public function sender(): ResponseSender
+    {
+        return new ResponseSender($this->router());
+    }
+
+    /**
+     * @param $data
+     * @param int $statusCode
+     * @return ResponseInterface
+     */
+    public function send($data, int $statusCode = 200): ResponseInterface
+    {
+        return $this->sender()->send($data, $statusCode);
     }
 }

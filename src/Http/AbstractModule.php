@@ -1,38 +1,36 @@
 <?php
 
-namespace Atom\Web\Http;
+namespace Atom\Framework\Http;
 
-use Atom\DI\DIC;
+use Atom\DI\Container;
 use Atom\Event\Contracts\EventDispatcherContract;
 use Atom\Event\EventDispatcher;
 use Atom\Routing\Contracts\RouterContract;
 use Atom\Routing\Router;
-use Atom\Web\Contracts\ModuleContract;
+use Atom\Framework\Contracts\ModuleContract;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Server\RequestHandlerInterface;
 
 /**
  * @property String MODULE_NAME
  * @property String MODULE_DESCRIPTION
- * Class AbstractModule
- * @package Oxygen\AbstractTypes
  */
 abstract class AbstractModule implements ModuleContract
 {
     /**
      * @var String
      */
-    protected $moduleName;
+    protected string $moduleName;
     /**
      * @var string
      */
-    protected $moduleDescription;
+    protected string $moduleDescription;
     /**
      * @var RouterContract | Router
      */
     protected $router;
     /**
-     * @var ContainerInterface | DIC
+     * @var ContainerInterface | Container
      */
     protected $container;
 
@@ -48,11 +46,10 @@ abstract class AbstractModule implements ModuleContract
 
     public function __construct(
         RouterContract $router,
-        DIC $container,
+        Container $container,
         EventDispatcherContract $eventDispatcher,
         RequestHandler $requestHandler
-    )
-    {
+    ) {
         $this->router = $router;
         $this->container = $container;
         $this->eventDispatcher = $eventDispatcher;

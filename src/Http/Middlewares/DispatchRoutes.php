@@ -1,37 +1,37 @@
 <?php
 
 
-namespace Atom\Web\Http\Middlewares;
+namespace Atom\Framework\Http\Middlewares;
 
-use Atom\DI\DIC;
+use Atom\DI\Container;
 use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
 use Atom\DI\Exceptions\NotFoundException;
-use Atom\DI\Exceptions\StorageNotFoundException;
+use Atom\Framework\Exceptions\InvalidRouteHandlerException;
+use Atom\Framework\Exceptions\RequestHandlerException;
+use Atom\Framework\Http\RequestHandler;
 use Atom\Routing\Contracts\RouterContract;
 use Atom\Routing\MatchedRoute;
-use Atom\Web\Exceptions\InvalidRouteHandlerException;
-use Atom\Web\Exceptions\RequestHandlerException;
-use Atom\Web\Http\RequestHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
+use ReflectionException;
 
 class DispatchRoutes extends AbstractMiddleware
 {
     /**
      * @var RouterContract
      */
-    private $router;
+    private RouterContract $router;
     /**
-     * @var DIC
+     * @var Container
      */
-    private $dic;
+    private Container $Container;
 
-    public function __construct(RouterContract $router, DIC $dic)
+    public function __construct(RouterContract $router, Container $Container)
     {
         $this->router = $router;
-        $this->dic = $dic;
+        $this->Container = $Container;
     }
 
     /**
@@ -42,8 +42,8 @@ class DispatchRoutes extends AbstractMiddleware
      * @throws ContainerException
      * @throws InvalidRouteHandlerException
      * @throws NotFoundException
+     * @throws ReflectionException
      * @throws RequestHandlerException
-     * @throws StorageNotFoundException
      */
     public function run(ServerRequestInterface $request, RequestHandler $handler): ResponseInterface
     {
@@ -67,25 +67,24 @@ class DispatchRoutes extends AbstractMiddleware
     /**
      * @param $routeHandler
      * @param MatchedRoute $matchedRoute
-     * @param DIC $dic
+     * @param Container $Container
      * @return mixed|void
      * @throws InvalidRouteHandlerException
      * @throws CircularDependencyException
      * @throws ContainerException
-     * @throws NotFoundException
-     * @throws StorageNotFoundException
+     * @throws NotFoundException|ReflectionException
      */
     private function asMiddleware(
         $routeHandler,
         MatchedRoute $matchedRoute,
-        DIC $dic
+        Container $Container
     ): ?MiddlewareInterface
     {
         if ($routeHandler == null) {
             return null;
         }
         if (is_string($routeHandler)) {
-            return $dic->get($routeHandler);
+            return $Container->get($routeHandler);
         }
         if (($routeHandler instanceof MiddlewareInterface)) {
             return $routeHandler;

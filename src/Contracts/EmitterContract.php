@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Atom\Web\Contracts;
+namespace Atom\Framework\Contracts;
 
 use Psr\Http\Message\ResponseInterface;
 

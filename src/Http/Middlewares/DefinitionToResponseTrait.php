@@ -1,56 +1,55 @@
 <?php
 
 
-namespace Atom\Web\Http\Middlewares;
+namespace Atom\Framework\Http\Middlewares;
 
-use Atom\DI\Contracts\DefinitionContract;
+use Atom\DI\Definition;
+use Atom\DI\Definitions\AbstractDefinition;
+use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
-use Atom\Web\Contracts\RendererContract;
-use Atom\Web\Request;
-use Atom\Web\RequestHandler;
-use Atom\Web\Response;
+use Atom\DI\Exceptions\NotFoundException;
+use Atom\Framework\Contracts\RendererContract;
+use Atom\Framework\Http\RequestHandler;
+use Atom\Framework\Http\Response;
+use Atom\Framework\Http\ResponseSender;
 use Psr\Http\Message\ServerRequestInterface;
-use Psr\Http\Server\RequestHandlerInterface;
+use ReflectionException;
 
 trait DefinitionToResponseTrait
 {
     /**
-     * @param DefinitionContract $definition
+     * @param AbstractDefinition $definition
      * @param ServerRequestInterface $request
      * @param RequestHandler $handler
      * @param array $args
      * @param array $mapping
      * @return mixed
+     * @throws CircularDependencyException
      * @throws ContainerException
+     * @throws NotFoundException
+     * @throws ReflectionException
      */
     public static function definitionToResponse(
-        DefinitionContract $definition,
+        AbstractDefinition $definition,
         ServerRequestInterface $request,
         RequestHandler $handler,
         array $args = [],
         array $mapping = []
-    )
-    {
+    ) {
         $c = $handler->container();
-        $requestStorable = $c->as()->object($request);
-        $handlerStorable = $c->as()->object($handler);
-        $c->bindings()->store(ServerRequestInterface::class, $requestStorable);
-        $c->bindings()->store(Request::class, $requestStorable);
-
         $definition
-            ->with(RequestHandler::class, $handlerStorable)
-            ->with(RequestHandlerInterface::class, $handlerStorable)
-            ->withParameter("renderer", $c->as()->get(RendererContract::class))
-            ->withParameter("requestHandler", $handlerStorable);
-        foreach ($args as $name => $value) {
-            $definition->withParameter($name, $c->as()->value($value));
-        }
-        foreach ($mapping as $abstract => $concrete) {
-            $definition->with($abstract, $c->as()->value($concrete));
-        }
-        $c->getExtractionChain()->clear();
-        $response = $c->extract($definition);
-        $c->getExtractionChain()->clear();
+            ->withParameters($args)
+            ->withClasses($mapping)
+            ->withParameters([
+                "rend" => Definition::get(RendererContract::class),
+                "hand" => $handler,
+                "req" => $request,
+                "ker" => $handler->getKernel(),
+                "res" => Definition::get(ResponseSender::class)
+            ]);
+        $c->getResolutionStack()->clear();
+        $response = $c->interpret($definition);
+        $c->getResolutionStack()->clear();
         if (is_string($response)) {
             return Response::html($response);
         }

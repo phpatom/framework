@@ -1,13 +1,13 @@
 <?php
 
-namespace Atom\Web\Http;
+namespace Atom\Framework\Http;
 
 use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
 use Atom\DI\Exceptions\NotFoundException;
 use Atom\DI\Exceptions\StorageNotFoundException;
+use Atom\Framework\Http\Middlewares\AbstractMiddleware;
 use Atom\Routing\Exceptions\RouteNotFoundException;
-use Atom\Web\AbstractMiddleware;
 use Fig\Http\Message\RequestMethodInterface;
 use Laminas\Diactoros\Response\EmptyResponse;
 use Laminas\Diactoros\Response\JsonResponse;
@@ -16,13 +16,14 @@ use Laminas\Diactoros\Response\TextResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 
-abstract class AbstractRouteHandler extends AbstractMiddleware
+abstract class Resource extends AbstractMiddleware
 {
+
     /**
      * @var RequestHandler
      */
-    protected $handler;
-    private $controllerMethods = [
+    protected RequestHandler $handler;
+    private array $controllerMethods = [
         RequestMethodInterface::METHOD_HEAD,
         RequestMethodInterface::METHOD_GET,
         RequestMethodInterface::METHOD_POST,

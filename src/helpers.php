@@ -1,26 +1,44 @@
 <?php
 
-use Atom\Kernel\Env\Env;
-use Atom\DI\Exceptions\CircularDependencyException;
-use Atom\DI\Exceptions\ContainerException;
-use Atom\DI\Exceptions\NotFoundException;
-use Atom\DI\Exceptions\StorageNotFoundException;
 use Atom\Event\Exceptions\ListenerAlreadyAttachedToEvent;
-use Atom\Web\Application;
+use Atom\Framework\Application;
+use Atom\Framework\ApplicationFactory;
+use Atom\Framework\Contracts\HasKernel;
+use Atom\Framework\Env;
+
+require_once "vendor/autoload.php";
 
 if (!function_exists("atom")) {
     /**
      * @param string $dir
      * @param string $env
      * @return Application
-     * @throws CircularDependencyException
-     * @throws ContainerException
+     * @throws Throwable
      * @throws ListenerAlreadyAttachedToEvent
-     * @throws NotFoundException
-     * @throws StorageNotFoundException
      */
     function atom(string $dir, string $env = Env::DEV): Application
     {
         return Application::create($dir, $env);
+    }
+}
+if (!function_exists("app")) {
+    /**
+     * @param HasKernel $kernel
+     * @return Application
+     * @throws ListenerAlreadyAttachedToEvent
+     * @throws Throwable
+     */
+    function app(HasKernel $kernel): Application
+    {
+        return Application::of($kernel);
+    }
+}
+if (function_exists("createAtom")) {
+    /**
+     * @return ApplicationFactory
+     */
+    function createAtom(): ApplicationFactory
+    {
+        return new ApplicationFactory();
     }
 }

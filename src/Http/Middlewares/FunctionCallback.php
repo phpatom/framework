@@ -1,13 +1,16 @@
 <?php
 
 
-namespace Atom\Web\Http\Middlewares;
+namespace Atom\Framework\Http\Middlewares;
 
+use Atom\DI\Definition;
+use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
-use Atom\Web\AbstractMiddleware;
-use Atom\Web\RequestHandler;
+use Atom\DI\Exceptions\NotFoundException;
+use Atom\Framework\Http\RequestHandler;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use ReflectionException;
 
 class FunctionCallback extends AbstractMiddleware
 {
@@ -20,12 +23,12 @@ class FunctionCallback extends AbstractMiddleware
     /**
      * @var array
      */
-    private $args;
+    private array $args;
 
     /**
      * @var array
      */
-    private $mapping;
+    private array $mapping;
 
 
     /**
@@ -60,7 +63,10 @@ class FunctionCallback extends AbstractMiddleware
      * @param array $args
      * @param array $mapping
      * @return mixed
+     * @throws CircularDependencyException
      * @throws ContainerException
+     * @throws NotFoundException
+     * @throws ReflectionException
      */
     public static function call(
         callable $callable,
@@ -69,7 +75,7 @@ class FunctionCallback extends AbstractMiddleware
         array $args = [],
         array $mapping = []
     ): ?ResponseInterface {
-        $definition = $handler->container()->as()->callTo($callable)->function();
+        $definition = Definition::callTo($callable)->function();
         return self::definitionToResponse($definition, $request, $handler, $args, $mapping);
     }
 }

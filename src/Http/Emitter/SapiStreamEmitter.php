@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Atom\Web\Http\Emitter;
+namespace Atom\Framework\Http\Emitter;
 
 use Psr\Http\Message\ResponseInterface;
 use function connection_status;
@@ -12,6 +12,10 @@ use function strlen;
 use function substr;
 use const CONNECTION_NORMAL;
 
+/**
+ * Class SapiStreamEmitter
+ * @source https://github.com/narrowspark/http-emitter
+ */
 final class SapiStreamEmitter extends AbstractSapiEmitter
 {
     /**
@@ -19,7 +23,7 @@ final class SapiStreamEmitter extends AbstractSapiEmitter
      *
      * @var int
      */
-    protected $maxBufferLength = 8192;
+    protected int $maxBufferLength = 8192;
 
     /**
      * Set the maximum output buffering level.

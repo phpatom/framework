@@ -1,11 +1,18 @@
 <?php
 
 
-namespace Atom\Web\Http;
+namespace Atom\Framework\Http;
 
+use Atom\DI\Exceptions\CircularDependencyException;
+use Atom\DI\Exceptions\ContainerException;
+use Atom\DI\Exceptions\NotFoundException;
+use Atom\Event\Exceptions\ListenerAlreadyAttachedToEvent;
+use Atom\Framework\Application;
+use Atom\Framework\Contracts\HasKernel;
 use Atom\Routing\Exceptions\RouteNotFoundException;
-use Atom\Routing\Router;
 use Laminas\Diactoros\Response as BaseResponse;
+use ReflectionException;
+use Throwable;
 
 class Response extends BaseResponse
 {
@@ -59,19 +66,27 @@ class Response extends BaseResponse
     }
 
     /**
+     * @param HasKernel $kernel
      * @param $uri
      * @param array $data
      * @param int $status
      * @param array $headers
      * @return BaseResponse\RedirectResponse
      * @throws RouteNotFoundException
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws NotFoundException
+     * @throws ListenerAlreadyAttachedToEvent
+     * @throws ReflectionException
+     * @throws Throwable
      */
     public static function redirectRoute(
+        HasKernel $kernel,
         $uri,
         array $data = [],
         int $status = 200,
         array $headers = []
     ): BaseResponse\RedirectResponse {
-        return self::redirect(Router::$instance->generateUrl($uri, $data), $status, $headers);
+        return self::redirect(Application::of($kernel)->router()->generateUrl($uri, $data), $status, $headers);
     }
 }

@@ -1,9 +1,9 @@
 <?php
 
 
-namespace Atom\Web\Http\Emitter;
+namespace Atom\Framework\Http\Emitter;
 
-use Atom\Web\Contracts\EmitterContract;
+use Atom\Framework\Contracts\EmitterContract;
 use Psr\Http\Message\ResponseInterface;
 
 final class NoneEmitter implements EmitterContract

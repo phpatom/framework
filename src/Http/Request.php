@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Atom\Web\Http;
+namespace Atom\Framework\Http;
 
 use Atom\Routing\MatchedRoute;
 use Laminas\Diactoros\ServerRequest;
@@ -17,7 +17,7 @@ class Request extends ServerRequest
     /**
      * @var Accept[]
      */
-    private $acceptedContentTypes;
+    private array $acceptedContentTypes;
 
     public static function incoming(): Request
     {

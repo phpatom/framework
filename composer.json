@@ -1,5 +1,5 @@
 {
-  "name": "phpatom/web",
+  "name": "phpatom/framework",
   "description": "The web component for the atom framework",
   "keywords": [
     "atom",
@@ -12,14 +12,18 @@
   "license": "MIT",
   "type": "library",
   "require": {
-    "php": "^7.4",
-    "phpatom/kernel": "^0.1",
+    "php": "^7.4|8.*",
     "laminas/laminas-diactoros": "^2.3@dev",
     "phpatom/routing": "^0.1",
     "psr/http-server-middleware": "^1.0@dev",
     "willdurand/negotiation": "^3.0",
     "ext-json": "*",
-    "phpatom/validation": "^0.1.1"
+    "phpatom/validation": "^0.1.1",
+    "vlucas/phpdotenv": "^5.3",
+    "league/flysystem": "^2.0",
+    "phpatom/di": "^0.3.0",
+    "league/flysystem-memory": "2.0",
+    "phpatom/event": "^0.1.0"
   },
   "require-dev": {
     "squizlabs/php_codesniffer": "3.*",
@@ -36,7 +40,7 @@
   },
   "autoload": {
     "psr-4": {
-      "Atom\\Web\\": "src"
+      "Atom\\Framework\\": "src"
     },
     "files": [
       "src/helpers.php"
@@ -44,7 +48,7 @@
   },
   "autoload-dev": {
     "psr-4": {
-      "Atom\\Web\\Test\\": "tests"
+      "Atom\\Framework\\Test\\": "tests"
     }
   },
   "minimum-stability": "stable"

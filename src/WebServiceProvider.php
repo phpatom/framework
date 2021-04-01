@@ -1,25 +1,27 @@
 <?php
 
-namespace Atom\Web;
+namespace Atom\Framework;
 
+use Atom\DI\Container;
 use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
+use Atom\DI\Exceptions\MultipleBindingException;
 use Atom\DI\Exceptions\NotFoundException;
 use Atom\Event\Exceptions\ListenerAlreadyAttachedToEvent;
-use Atom\Kernel\Contracts\ServiceProviderContract;
-use Atom\DI\DIC;
-use Atom\DI\Exceptions\StorageNotFoundException;
-use Atom\Kernel\Env\Env;
-use Atom\Kernel\Kernel;
+use Atom\Framework\Contracts\EmitterContract;
+use Atom\Framework\Contracts\RendererContract;
+use Atom\Framework\Contracts\ServiceProviderContract;
+use Atom\Framework\FileSystem\Path;
+use Atom\Framework\Http\Emitter\SapiEmitter;
+use Atom\Framework\Http\RequestHandler;
+use Atom\Framework\Http\ResponseSender;
+use Atom\Framework\Rendering\RoutingExtensionProvider;
 use Atom\Routing\Contracts\RouterContract;
 use Atom\Routing\Router;
-use Atom\Web\Contracts\EmitterContract;
-use Atom\Web\Contracts\RendererContract;
-use Atom\Web\Http\Emitter\SapiEmitter;
-use Atom\Web\Http\RequestHandler;
 use InvalidArgumentException;
-use Psr\Container\ContainerInterface;
 use Psr\Http\Server\RequestHandlerInterface;
+use ReflectionException;
+use Throwable;
 
 class WebServiceProvider implements ServiceProviderContract
 {
@@ -33,114 +35,53 @@ class WebServiceProvider implements ServiceProviderContract
      */
     private $router = Router::class;
 
-    private $loadDotEnv = false;
-
     /**
      * @var string|EmitterContract
      */
     private $emitter = SapiEmitter::class;
 
     /**
-     * @var DIC $container
+     * @var Container $container
      */
-    private $container;
+    private Container $container;
 
+    private ?string $publicPath = null;
+
+    public static function create(): self
+    {
+        return new self();
+    }
 
     /**
-     * @param Kernel $app
+     * @param Kernel $kernel
      * @throws CircularDependencyException
      * @throws ContainerException
+     * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
-     * @throws StorageNotFoundException
+     * @throws Throwable
      */
-    public function register(Kernel $app)
+    public function register(Kernel $kernel)
     {
-        $c = $app->container();
+        $c = $kernel->container();
         $this->container = $c;
-        $c->singletons()->store(ContainerInterface::class, $c->as()->object($c));
-        if ($this->loadDotEnv) {
-            $app->env()->dotEnv()->safeLoad();
-        }
-        $this->provideApp($c, $app);
+        $this->provideDotEnv($kernel);
+        $this->providePath($kernel);
+        $this->provideApp($c, $kernel);
         $this->providerRouting($c);
         $this->provideEmitter($c);
         $this->provideRequestHandler($c);
     }
 
-    /**
-     * @param DIC $c
-     * @throws CircularDependencyException
-     * @throws ContainerException
-     * @throws NotFoundException
-     * @throws StorageNotFoundException
-     */
-    private function provideRequestHandler(DIC $c)
-    {
-        $requestHandler = $this->makeRequestHandler();
-        $requestHandlerClassName = get_class($requestHandler);
-        $aliases = [RequestHandler::class, RequestHandlerInterface::class];
-        if ($requestHandlerClassName !== RequestHandler::class) {
-            $aliases[] = $requestHandlerClassName;
-        }
-        foreach ($aliases as $alias) {
-            $c->singletons()->store($alias, $c->as()->object($requestHandler));
-        }
-    }
-
-    /**
-     * @param DIC $c
-     * @throws CircularDependencyException
-     * @throws ContainerException
-     * @throws NotFoundException
-     * @throws StorageNotFoundException
-     */
-    private function providerRouting(DIC $c)
-    {
-        $routerAliases = [RouterContract::class, Router::class];
-        $router = $this->makeRouter();
-        if (get_class($router) !== Router::class) {
-            $routerAliases[] = get_class($router);
-        }
-        foreach ($routerAliases as $alias) {
-            $c->singletons()->store($alias, $c->as()->object($router));
-        }
-        //Extension
-        $c->resolved(RendererContract::class, function (RendererContract $renderer) use ($router) {
-            $renderer->addExtensions(new RoutingExtensionProvider($router));
-        });
-    }
-
-    /**
-     * @param DIC $c
-     * @param $kernel
-     * @throws StorageNotFoundException
-     */
-    private function provideApp(DIC $c, $kernel)
-    {
-        $c->singletons()->bindInstance($kernel);
-    }
-
-    /**
-     * @param DIC $c
-     * @throws CircularDependencyException
-     * @throws ContainerException
-     * @throws NotFoundException
-     * @throws StorageNotFoundException
-     */
-    private function provideEmitter(DIC $c)
-    {
-        $emitter = $this->makeEmitter();
-        $aliases = [EmitterContract::class, get_class($emitter)];
-        foreach ($aliases as $alias) {
-            $c->singletons()->store($alias, $c->as()->object($emitter));
-        }
-    }
 
     /**
      * @param string|RequestHandler $requestHandler
+     * @return WebServiceProvider
      */
     public function requestHandler($requestHandler): self
     {
+        if (is_null($requestHandler)) {
+            return $this;
+        }
         if (!is_string($requestHandler) && !($requestHandler instanceof RequestHandler)) {
             throw new InvalidArgumentException(
                 "The request handler should be either a classname or an object that extends "
@@ -152,11 +93,14 @@ class WebServiceProvider implements ServiceProviderContract
     }
 
     /**
-     * @param string $emitter
+     * @param string|null|EmitterContract $emitter
      * @return WebServiceProvider
      */
-    public function emitter(string $emitter): self
+    public function emitter($emitter = null): self
     {
+        if (is_null($emitter)) {
+            return $this;
+        }
         if (!is_string($emitter) && !($emitter instanceof EmitterContract)) {
             throw new InvalidArgumentException(
                 "The router should be either a classname or an object that implements "
@@ -168,11 +112,25 @@ class WebServiceProvider implements ServiceProviderContract
     }
 
     /**
-     * @param string|Router $router
+     * @param string|null $publicPath
+     * @return WebServiceProvider
+     */
+    public function publicPath(?string $publicPath): WebServiceProvider
+    {
+        $this->publicPath = $publicPath;
+        return $this;
+    }
+
+
+    /**
+     * @param string|Router|null $router
      * @return WebServiceProvider
      */
     public function router($router): self
     {
+        if (is_null($router)) {
+            return $this;
+        }
         if (!is_string($router) && !($router instanceof Router)) {
             throw new InvalidArgumentException(
                 "The router should be either a classname or an object that extends "
@@ -184,11 +142,103 @@ class WebServiceProvider implements ServiceProviderContract
     }
 
     /**
+     * @param Kernel $kernel
+     * @throws Exceptions\AppAlreadyBootedException
+     */
+    private function provideDotEnv(Kernel $kernel)
+    {
+        $kernel->env()->dotEnv()->safeLoad();
+        $kernel->setMetaData("app.web.env", $kernel->env());
+    }
+
+    /**
+     * @param Kernel $kernel
+     * @throws Exceptions\AppAlreadyBootedException
+     * @throws MultipleBindingException
+     */
+    private function providePath(Kernel $kernel)
+    {
+        $path = new Path($kernel->appPath(), $this->publicPath);
+        $kernel->container()->bind(Path::class)->toObject($path);
+        $kernel->setMetaData("app.web.path", $path);
+    }
+
+    /**
+     * @param Container $c
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws MultipleBindingException
+     * @throws NotFoundException
+     * @throws ReflectionException
+     */
+    private function provideRequestHandler(Container $c)
+    {
+        $requestHandler = $this->makeRequestHandler();
+        $requestHandlerClassName = get_class($requestHandler);
+        $aliases = [RequestHandler::class, RequestHandlerInterface::class];
+        if ($requestHandlerClassName !== RequestHandler::class) {
+            $aliases[] = $requestHandlerClassName;
+        }
+        $c->bind($aliases)->toObject($requestHandler);
+    }
+
+    /**
+     * @param Container $c
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws MultipleBindingException
+     * @throws NotFoundException
+     * @throws ReflectionException
+     */
+    private function providerRouting(Container $c)
+    {
+        $routerAliases = [RouterContract::class, Router::class];
+        $router = $this->makeRouter();
+        if (get_class($router) !== Router::class) {
+            $routerAliases[] = get_class($router);
+        }
+        $this->container->bind($routerAliases)->toObject($router);
+        $c->bind(ResponseSender::class)->toObject(new ResponseSender(
+            $router
+        ));
+        //Extension
+        $c->resolved(RendererContract::class, function (RendererContract $renderer) use ($router) {
+            $renderer->addExtensions(new RoutingExtensionProvider($router));
+        });
+    }
+
+    /**
+     * @param Container $c
+     * @param $kernel
+     * @throws ListenerAlreadyAttachedToEvent
+     * @throws Throwable
+     */
+    private function provideApp(Container $c, $kernel)
+    {
+        $c->bind(Kernel::class)->toObject($kernel);
+        $c->bind(Application::class)->toObject(Application::of($kernel));
+    }
+
+    /**
+     * @param Container $c
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws MultipleBindingException
+     * @throws NotFoundException
+     * @throws ReflectionException
+     */
+    private function provideEmitter(Container $c)
+    {
+        $emitter = $this->makeEmitter();
+        $c->bind([EmitterContract::class, get_class($emitter)])->toObject($emitter);
+    }
+
+    /**
      * @return Router
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
-     * @throws StorageNotFoundException
+     * @throws ReflectionException
      */
     private function makeRouter(): Router
     {
@@ -203,7 +253,7 @@ class WebServiceProvider implements ServiceProviderContract
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
-     * @throws StorageNotFoundException
+     * @throws ReflectionException
      */
     private function makeEmitter(): EmitterContract
     {
@@ -215,10 +265,10 @@ class WebServiceProvider implements ServiceProviderContract
 
     /**
      * @return RequestHandler
-     * @throws StorageNotFoundException
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
+     * @throws ReflectionException
      */
     private function makeRequestHandler(): RequestHandler
     {
@@ -226,38 +276,5 @@ class WebServiceProvider implements ServiceProviderContract
             return $this->container->get($this->requestHandler);
         }
         return $this->requestHandler;
-    }
-
-    /**
-     * @return $this
-     */
-    public function withoutDotEnv(): self
-    {
-        $this->loadDotEnv = false;
-        return $this;
-    }
-
-    /**
-     * @return $this
-     */
-    public function dotEnv(): self
-    {
-        $this->loadDotEnv = true;
-        return $this;
-    }
-
-    /**
-     * @param string $appPath
-     * @param string $env
-     * @return Application
-     * @throws CircularDependencyException
-     * @throws ContainerException
-     * @throws NotFoundException
-     * @throws StorageNotFoundException
-     * @throws ListenerAlreadyAttachedToEvent
-     */
-    public function create(string $appPath, string $env = Env::DEV): Application
-    {
-        return (new Application($appPath, $env))->use($this);
     }
 }
