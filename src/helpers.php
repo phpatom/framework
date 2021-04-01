@@ -6,8 +6,6 @@ use Atom\Framework\ApplicationFactory;
 use Atom\Framework\Contracts\HasKernel;
 use Atom\Framework\Env;
 
-require_once "vendor/autoload.php";
-
 if (!function_exists("atom")) {
     /**
      * @param string $dir

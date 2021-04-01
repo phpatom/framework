@@ -6,8 +6,6 @@ namespace Atom\Framework\Test;
 use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
 use Atom\DI\Exceptions\NotFoundException;
-use Atom\DI\Exceptions\StorageNotFoundException;
-use Atom\DI\Exceptions\UnsupportedInvokerException;
 use Atom\Event\AbstractEventListener;
 use Atom\Event\Exceptions\ListenerAlreadyAttachedToEvent;
 use Atom\Framework\ApplicationFactory;
@@ -20,6 +18,7 @@ use Atom\Framework\Events\ServiceProviderRegistrationFailed;
 use Atom\Framework\Exceptions\RequestHandlerException;
 use Atom\Framework\Http\RequestHandler;
 use Atom\Framework\WebServiceProvider;
+use PHPUnit\Framework\MockObject\MockObject;
 use PHPUnit\Framework\TestCase;
 use Psr\Http\Server\MiddlewareInterface;
 use RuntimeException;
@@ -28,9 +27,7 @@ use Throwable;
 class ApplicationTest extends TestCase
 {
     /**
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      * @throws ListenerAlreadyAttachedToEvent
      */
     public function testItIsCreatedWIthWebServiceProviderWhenUsingNamedConstructor()
@@ -41,9 +38,7 @@ class ApplicationTest extends TestCase
 
     /**
      * @throws ListenerAlreadyAttachedToEvent
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testItNamedConstructors()
     {
@@ -68,15 +63,16 @@ class ApplicationTest extends TestCase
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
      * @throws RequestHandlerException
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testRun()
     {
         $mock = $this->getMockBuilder(RequestHandler::class)->disableOriginalConstructor()->getMock();
         $mock->expects($this->once())->method("run");
         $mock->method("run")->willReturn(null);
+        /**
+         * @var RequestHandler|MockObject $mock
+         */
         $app = Application::with()
             ->requestHandler($mock)
             ->create(__DIR__);
@@ -88,9 +84,7 @@ class ApplicationTest extends TestCase
      * @throws ContainerException
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testAServiceProviderCanBeUsed()
     {
@@ -98,7 +92,7 @@ class ApplicationTest extends TestCase
         $provider = new class implements ServiceProviderContract {
             public function register(Kernel $kernel)
             {
-                $kernel->container()->bindings()->store("foo", $kernel->container()->as()->value("bar"));
+                $kernel->container()->bind("foo")->toValue("bar");
             }
         };
         $app->use($provider);
@@ -144,9 +138,7 @@ class ApplicationTest extends TestCase
      * @throws ContainerException
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testTheRequestHandlerCanBeRetrieve()
     {
@@ -160,9 +152,7 @@ class ApplicationTest extends TestCase
      * @throws ContainerException
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testTheRouterCanBeRetrieve()
     {
@@ -176,9 +166,7 @@ class ApplicationTest extends TestCase
      * @throws ContainerException
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testModulesAreAdded()
     {
@@ -187,6 +175,9 @@ class ApplicationTest extends TestCase
         $modules = [$module1, $module2];
         $mock = $this->getMockBuilder(RequestHandler::class)->disableOriginalConstructor()->getMock();
         $mock->expects($this->exactly(1))->method("withModules")->with($modules);
+        /**
+         * @var RequestHandler|MockObject $mock
+         */
         $app = Application::with()->requestHandler($mock)->create(__DIR__);
         $app->withModules($modules);
     }
@@ -196,15 +187,16 @@ class ApplicationTest extends TestCase
      * @throws ContainerException
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testAModuleCanBeAdded()
     {
         $module = $this->getMockClass(ModuleContract::class);
         $mock = $this->getMockBuilder(RequestHandler::class)->disableOriginalConstructor()->getMock();
         $mock->expects($this->exactly(1))->method("withModule")->with($module);
+        /**
+         * @var RequestHandler|MockObject $mock
+         */
         $app = Application::with()->requestHandler($mock)->create(__DIR__);
         $app->withModule($module);
     }
@@ -214,9 +206,7 @@ class ApplicationTest extends TestCase
      * @throws ContainerException
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testRouteGroupAreRegistered()
     {
@@ -225,6 +215,9 @@ class ApplicationTest extends TestCase
         $callable = function () {
         };
         $router->expects($this->once())->method("group")->with($prefix, $callable, null);
+        /**
+         * @var Router|MockObject $router
+         */
         $app = Application::with()->router($router)->create("");
         $app->group($prefix, $callable);
     }
@@ -235,15 +228,16 @@ class ApplicationTest extends TestCase
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
      * @throws RequestHandlerException
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testMiddlewareCanBeAdded()
     {
         $middleware = $this->getMockClass(MiddlewareInterface::class);
         $mock = $this->getMockBuilder(RequestHandler::class)->disableOriginalConstructor()->getMock();
         $mock->expects($this->exactly(1))->method("add")->with($middleware);
+        /**
+         * @var RequestHandler|MockObject $mock
+         */
         $app = Application::with()->requestHandler($mock)->create(__DIR__);
         $app->add($middleware);
     }
@@ -254,13 +248,14 @@ class ApplicationTest extends TestCase
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
      * @throws RequestHandlerException
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testMiddlewareCanBeLoaded()
     {
         $middleware = $this->getMockClass(MiddlewareInterface::class);
+        /**
+         * @var RequestHandler|MockObject $mock
+         */
         $mock = $this->getMockBuilder(RequestHandler::class)->disableOriginalConstructor()->getMock();
         $mock->expects($this->exactly(1))->method("load")->with($middleware);
         $app = Application::with()->requestHandler($mock)->create(__DIR__);
@@ -269,9 +264,7 @@ class ApplicationTest extends TestCase
 
     /**
      * @throws ListenerAlreadyAttachedToEvent
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testGetProviderLoaded()
     {
@@ -282,9 +275,7 @@ class ApplicationTest extends TestCase
 
     /**
      * @throws ListenerAlreadyAttachedToEvent
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testProvidersCanBeAdded()
     {
@@ -305,9 +296,7 @@ class ApplicationTest extends TestCase
      * @throws ContainerException
      * @throws ListenerAlreadyAttachedToEvent
      * @throws NotFoundException
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testOf()
     {

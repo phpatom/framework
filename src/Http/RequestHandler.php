@@ -120,7 +120,7 @@ class RequestHandler implements RequestHandlerInterface, HasKernel
      * @throws ContainerException
      * @throws NotFoundException
      * @throws ReflectionException
-     * @throws RequestHandlerException
+     * @throws Exception
      */
     public function run()
     {
@@ -185,11 +185,7 @@ class RequestHandler implements RequestHandlerInterface, HasKernel
     /**
      * @param ServerRequestInterface $request
      * @return ResponseInterface
-     * @throws CircularDependencyException
-     * @throws ContainerException
-     * @throws NotFoundException
-     * @throws ReflectionException
-     * @throws RequestHandlerException
+     * @throws Exception
      */
     public function handle(ServerRequestInterface $request): ResponseInterface
     {

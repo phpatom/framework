@@ -60,7 +60,7 @@ class WebServiceProviderTest extends TestCase
         $this->assertEquals($app->requestHandler(), $kernel->get(RequestHandler::class));
         $this->assertEquals($app->requestHandler(), $kernel->get(RequestHandlerInterface::class));
 
-        //DOTENV LOADED
+        //DOT ENV LOADED
         $this->assertEquals("FOO", $_ENV["TEST_SECRET"] ?? null);
         $this->assertEquals(__DIR__, $app->path());
     }
@@ -71,20 +71,12 @@ class WebServiceProviderTest extends TestCase
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
-     * @throws StorageNotFoundException
      */
     public function testRequestHandler()
     {
         $kernel = new Kernel(__DIR__);
-        $c = $kernel->container();
-        $kernel->container()->bindings()->store(
-            EventDispatcherInterface::class,
-            $c->as()->object(new EventDispatcher())
-        );
-        $kernel->container()->bindings()->store(
-            RouterContract::class,
-            $c->as()->object(new Router())
-        );
+        $kernel->container()->bind(RouterContract::class)
+            ->toObject(new Router());
 
         $requestHandler = new RequestHandler(
             $kernel->container()
@@ -101,7 +93,6 @@ class WebServiceProviderTest extends TestCase
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
-     * @throws StorageNotFoundException
      */
     public function testEmitter()
     {
@@ -119,7 +110,6 @@ class WebServiceProviderTest extends TestCase
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
-     * @throws StorageNotFoundException
      */
     public function testRouter()
     {
@@ -137,7 +127,6 @@ class WebServiceProviderTest extends TestCase
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
-     * @throws StorageNotFoundException
      */
     public function testPublicPath()
     {
@@ -145,5 +134,4 @@ class WebServiceProviderTest extends TestCase
         $kernel->use(WebServiceProvider::create()->publicPath($path = DIRECTORY_SEPARATOR));
         $this->assertEquals($kernel->get(Path::class)->public("bar"), $path . "bar");
     }
-
 }

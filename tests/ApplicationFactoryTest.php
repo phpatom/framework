@@ -4,8 +4,6 @@
 namespace Atom\Framework\Test;
 
 use Atom\DI\Container;
-use Atom\DI\Exceptions\StorageNotFoundException;
-use Atom\DI\Exceptions\UnsupportedInvokerException;
 use Atom\Event\AbstractEvent;
 use Atom\Event\AbstractEventListener;
 use Atom\Event\EventDispatcher;
@@ -35,8 +33,6 @@ class ApplicationFactoryTest extends TestCase
     }
 
     /**
-     * @throws StorageNotFoundException
-     * @throws UnsupportedInvokerException
      * @throws ListenerAlreadyAttachedToEvent
      * @throws Throwable
      */
@@ -50,14 +46,12 @@ class ApplicationFactoryTest extends TestCase
 
     /**
      * @throws ListenerAlreadyAttachedToEvent
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testContainer()
     {
         $container = new Container();
-        $container->bindings()->store("foo", $container->as()->value("bar"));
+        $container->bind("foo")->toValue("bar");
         $app = ApplicationFactory::with()->container($container)->create(__DIR__);
         $this->assertEquals($container, $app->container());
         $this->assertEquals("bar", $app->container()->get("foo"));
@@ -65,9 +59,7 @@ class ApplicationFactoryTest extends TestCase
 
     /**
      * @throws ListenerAlreadyAttachedToEvent
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testEventDispatcher()
     {
@@ -94,9 +86,7 @@ class ApplicationFactoryTest extends TestCase
 
     /**
      * @throws ListenerAlreadyAttachedToEvent
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testRouter()
     {
@@ -107,21 +97,13 @@ class ApplicationFactoryTest extends TestCase
 
     /**
      * @throws ListenerAlreadyAttachedToEvent
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testRequestHandler()
     {
         $c = new Container();
-        $c->bindings()->store(
-            EventDispatcherInterface::class,
-            $c->as()->object(new EventDispatcher())
-        );
-        $c->bindings()->store(
-            RouterContract::class,
-            $c->as()->object(new Router())
-        );
+        $c->bind(EventDispatcherInterface::class)->toValue(new EventDispatcher());
+        $c->bind(RouterContract::class)->toObject(new Router());
         $requestHandler = new RequestHandler($c);
         $app = ApplicationFactory::with()->requestHandler($requestHandler)->create(__DIR__);
         $this->assertEquals($requestHandler, $app->requestHandler());
@@ -129,9 +111,7 @@ class ApplicationFactoryTest extends TestCase
 
     /**
      * @throws ListenerAlreadyAttachedToEvent
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testEmitter()
     {
@@ -142,9 +122,7 @@ class ApplicationFactoryTest extends TestCase
 
     /**
      * @throws ListenerAlreadyAttachedToEvent
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testKernel()
     {
@@ -171,9 +149,7 @@ class ApplicationFactoryTest extends TestCase
 
     /**
      * @throws ListenerAlreadyAttachedToEvent
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function testIn()
     {
@@ -183,9 +159,7 @@ class ApplicationFactoryTest extends TestCase
 
     /**
      * @throws ListenerAlreadyAttachedToEvent
-     * @throws StorageNotFoundException
      * @throws Throwable
-     * @throws UnsupportedInvokerException
      */
     public function modules()
     {
@@ -194,7 +168,7 @@ class ApplicationFactoryTest extends TestCase
             public function register(Kernel $kernel)
             {
                 $c = $kernel->container();
-                $c->bindings()->store("foo", $c->as()->value("bar"));
+                $c->bind("foo")->toValue("bar");
             }
         };
 

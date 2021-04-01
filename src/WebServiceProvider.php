@@ -154,12 +154,11 @@ class WebServiceProvider implements ServiceProviderContract
     /**
      * @param Kernel $kernel
      * @throws Exceptions\AppAlreadyBootedException
-     * @throws MultipleBindingException
      */
     private function providePath(Kernel $kernel)
     {
         $path = new Path($kernel->appPath(), $this->publicPath);
-        $kernel->container()->bind(Path::class)->toObject($path);
+        $kernel->container()->bindIfNotAvailable(Path::class)->toObject($path);
         $kernel->setMetaData("app.web.path", $path);
     }
 
@@ -167,7 +166,6 @@ class WebServiceProvider implements ServiceProviderContract
      * @param Container $c
      * @throws CircularDependencyException
      * @throws ContainerException
-     * @throws MultipleBindingException
      * @throws NotFoundException
      * @throws ReflectionException
      */
@@ -179,14 +177,13 @@ class WebServiceProvider implements ServiceProviderContract
         if ($requestHandlerClassName !== RequestHandler::class) {
             $aliases[] = $requestHandlerClassName;
         }
-        $c->bind($aliases)->toObject($requestHandler);
+        $c->bindIfNotAvailable($aliases)->toObject($requestHandler);
     }
 
     /**
      * @param Container $c
      * @throws CircularDependencyException
      * @throws ContainerException
-     * @throws MultipleBindingException
      * @throws NotFoundException
      * @throws ReflectionException
      */
@@ -197,8 +194,8 @@ class WebServiceProvider implements ServiceProviderContract
         if (get_class($router) !== Router::class) {
             $routerAliases[] = get_class($router);
         }
-        $this->container->bind($routerAliases)->toObject($router);
-        $c->bind(ResponseSender::class)->toObject(new ResponseSender(
+        $this->container->bindIfNotAvailable($routerAliases, $router);
+        $c->bindIfNotAvailable(ResponseSender::class, new ResponseSender(
             $router
         ));
         //Extension
@@ -215,22 +212,21 @@ class WebServiceProvider implements ServiceProviderContract
      */
     private function provideApp(Container $c, $kernel)
     {
-        $c->bind(Kernel::class)->toObject($kernel);
-        $c->bind(Application::class)->toObject(Application::of($kernel));
+        $c->bindIfNotAvailable(Kernel::class)->toObject($kernel);
+        $c->bindIfNotAvailable(Application::class)->toObject(Application::of($kernel));
     }
 
     /**
      * @param Container $c
      * @throws CircularDependencyException
      * @throws ContainerException
-     * @throws MultipleBindingException
      * @throws NotFoundException
      * @throws ReflectionException
      */
     private function provideEmitter(Container $c)
     {
         $emitter = $this->makeEmitter();
-        $c->bind([EmitterContract::class, get_class($emitter)])->toObject($emitter);
+        $c->bindIfNotAvailable([EmitterContract::class, get_class($emitter)])->toObject($emitter);
     }
 
     /**

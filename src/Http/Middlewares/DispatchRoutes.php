@@ -12,6 +12,7 @@ use Atom\Framework\Exceptions\RequestHandlerException;
 use Atom\Framework\Http\RequestHandler;
 use Atom\Routing\Contracts\RouterContract;
 use Atom\Routing\MatchedRoute;
+use Exception;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Psr\Http\Server\MiddlewareInterface;
@@ -44,6 +45,7 @@ class DispatchRoutes extends AbstractMiddleware
      * @throws NotFoundException
      * @throws ReflectionException
      * @throws RequestHandlerException
+     * @throws Exception
      */
     public function run(ServerRequestInterface $request, RequestHandler $handler): ResponseInterface
     {
