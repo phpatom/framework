@@ -13,7 +13,7 @@ use Atom\Event\Exceptions\ListenerAlreadyAttachedToEvent;
 use Atom\Framework\Contracts\HasKernel;
 use Atom\Framework\Contracts\ServiceProviderContract;
 use Atom\Framework\Events\ServiceProviderRegistered;
-use Atom\Framework\Events\ServiceProviderRegistrationFailed;
+use Atom\Framework\Events\ServiceProviderRegistrationFailure;
 use Atom\Framework\Exceptions\AppAlreadyBootedException;
 use Psr\Container\ContainerInterface;
 use Psr\EventDispatcher\EventDispatcherInterface;
@@ -131,7 +131,7 @@ class Kernel implements HasKernel
             $this->registeredProviders[] = $providerClassName;
             $this->eventDispatcher()->dispatch(new ServiceProviderRegistered($providerClassName));
         } catch (Throwable $exception) {
-            $this->eventDispatcher->dispatch(new ServiceProviderRegistrationFailed($serviceProvider, $exception));
+            $this->eventDispatcher->dispatch(new ServiceProviderRegistrationFailure($serviceProvider, $exception));
             throw $exception;
         }
         return $this;
@@ -168,6 +168,14 @@ class Kernel implements HasKernel
         $this->ensureNotBooted("BOOT");
         $this->booted = true;
         return $this;
+    }
+
+    /**
+     * @return bool
+     */
+    public function hasBooted(): bool
+    {
+        return $this->booted;
     }
 
     /**
@@ -242,8 +250,10 @@ class Kernel implements HasKernel
      */
     private function provideContainer()
     {
-        $containerAliases = [ContainerInterface::class, get_class($this->container)];
-        $this->container->bind($containerAliases)->toObject($this->container);
+        $this->container->bind(
+            [ContainerInterface::class, get_class($this->container)],
+            $this->container
+        );
     }
 
     /**
@@ -255,7 +265,7 @@ class Kernel implements HasKernel
             EventDispatcherContract::class,
             EventDispatcherInterface::class,
             get_class($this->eventDispatcher)
-        ])->toObject($this->eventDispatcher);
+        ], $this->eventDispatcher);
     }
 
     /**
@@ -263,6 +273,6 @@ class Kernel implements HasKernel
      */
     private function provideEnv()
     {
-        $this->container->bind(Env::class)->toObject($this->env);
+        $this->container->bind(Env::class, $this->env);
     }
 }

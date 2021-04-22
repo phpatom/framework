@@ -50,11 +50,14 @@ trait DefinitionToResponseTrait
         $c->getResolutionStack()->clear();
         $response = $c->interpret($definition);
         $c->getResolutionStack()->clear();
+        if (is_array($response)) {
+            return Response::json($response);
+        }
         if (is_string($response)) {
             return Response::html($response);
         }
-        if (is_array($response)) {
-            return Response::json($response);
+        if (is_scalar($response)) {
+            return Response::text($response);
         }
         return $response;
     }

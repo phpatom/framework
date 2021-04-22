@@ -13,8 +13,7 @@ use Atom\Framework\Contracts\ServiceProviderContract;
 use Atom\Framework\Kernel;
 use Atom\Routing\Router;
 use Atom\Framework\Application;
-use Atom\Framework\Contracts\ModuleContract;
-use Atom\Framework\Events\ServiceProviderRegistrationFailed;
+use Atom\Framework\Events\ServiceProviderRegistrationFailure;
 use Atom\Framework\Exceptions\RequestHandlerException;
 use Atom\Framework\Http\RequestHandler;
 use Atom\Framework\WebServiceProvider;
@@ -126,7 +125,7 @@ class ApplicationTest extends TestCase
             }
         };
         $app->eventDispatcher()->addEventListener(
-            ServiceProviderRegistrationFailed::class,
+            ServiceProviderRegistrationFailure::class,
             $listener
         );
         $app->kernel()->boot();
@@ -159,46 +158,6 @@ class ApplicationTest extends TestCase
         $app = Application::create(__DIR__);
         $this->assertInstanceOf(Router::class, $app->router());
         $this->assertEquals($app->router(), $app->router());
-    }
-
-    /**
-     * @throws CircularDependencyException
-     * @throws ContainerException
-     * @throws ListenerAlreadyAttachedToEvent
-     * @throws NotFoundException
-     * @throws Throwable
-     */
-    public function testModulesAreAdded()
-    {
-        $module1 = $this->getMockClass(ModuleContract::class);
-        $module2 = $this->getMockClass(ModuleContract::class);
-        $modules = [$module1, $module2];
-        $mock = $this->getMockBuilder(RequestHandler::class)->disableOriginalConstructor()->getMock();
-        $mock->expects($this->exactly(1))->method("withModules")->with($modules);
-        /**
-         * @var RequestHandler|MockObject $mock
-         */
-        $app = Application::with()->requestHandler($mock)->create(__DIR__);
-        $app->withModules($modules);
-    }
-
-    /**
-     * @throws CircularDependencyException
-     * @throws ContainerException
-     * @throws ListenerAlreadyAttachedToEvent
-     * @throws NotFoundException
-     * @throws Throwable
-     */
-    public function testAModuleCanBeAdded()
-    {
-        $module = $this->getMockClass(ModuleContract::class);
-        $mock = $this->getMockBuilder(RequestHandler::class)->disableOriginalConstructor()->getMock();
-        $mock->expects($this->exactly(1))->method("withModule")->with($module);
-        /**
-         * @var RequestHandler|MockObject $mock
-         */
-        $app = Application::with()->requestHandler($mock)->create(__DIR__);
-        $app->withModule($module);
     }
 
     /**

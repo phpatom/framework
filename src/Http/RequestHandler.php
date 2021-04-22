@@ -10,7 +10,6 @@ use Atom\DI\Exceptions\MultipleBindingException;
 use Atom\DI\Exceptions\NotFoundException;
 use Atom\Framework\Contracts\EmitterContract;
 use Atom\Framework\Contracts\HasKernel;
-use Atom\Framework\Contracts\ModuleContract;
 use Atom\Framework\Contracts\RendererContract;
 use Atom\Framework\Events\AppFailed;
 use Atom\Framework\Events\MiddlewareLoaded;
@@ -39,12 +38,13 @@ class RequestHandler implements RequestHandlerInterface, HasKernel
     /**
      * @var array<MiddlewareInterface>
      */
-    private array $middlewareList = [];
+    private array $pipeline = [];
 
     /**
-     * @var array<ModuleContract>
+     * @var array<string>
      */
-    private array $moduleList = [];
+    private array $registered = [];
+
     /**
      * @var int
      */
@@ -72,17 +72,17 @@ class RequestHandler implements RequestHandlerInterface, HasKernel
 
     /**
      * RequestHandler constructor.
-     * @param ContainerInterface $container
+     * @param ContainerInterface $kernel
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
      * @throws ReflectionException
      */
     public function __construct(
-        ContainerInterface $container
+        ContainerInterface $kernel
     )
     {
-        $this->container = $container;
+        $this->container = $kernel;
         $this->eventDispatcher = $this->container()->get(EventDispatcherInterface::class);
         $this->router = $this->container()->get(RouterContract::class);
     }
@@ -108,11 +108,19 @@ class RequestHandler implements RequestHandlerInterface, HasKernel
     }
 
     /**
+     * @return ContainerInterface | Container
+     */
+    public function container(): ContainerInterface
+    {
+        return $this->container;
+    }
+
+    /**
      * @return array
      */
-    public function getMiddlewares(): array
+    public function getRegistered(): array
     {
-        return $this->middlewareList;
+        return $this->registered;
     }
 
     /**
@@ -128,45 +136,17 @@ class RequestHandler implements RequestHandlerInterface, HasKernel
         $this->emit($response);
     }
 
-    /**
-     * @return ContainerInterface | Container
-     */
-    public function container(): ContainerInterface
-    {
-        return $this->container;
-    }
 
     /**
      * @param $middleware
      * @return $this
      * @throws RequestHandlerException
      */
-    public function add($middleware): self
+    public function pipe($middleware): self
     {
         $this->validateMiddleware($middleware);
-        $this->middlewareList[] = $middleware;
-        return $this;
-    }
-
-    /**
-     * @param $module
-     * @return $this
-     */
-    public function withModule($module): self
-    {
-        $this->moduleList[] = $module;
-        return $this;
-    }
-
-    /**
-     * @param array $modules
-     * @return $this
-     */
-    public function withModules(array $modules): self
-    {
-        foreach ($modules as $module) {
-            $this->withModule($module);
-        }
+        $this->pipeline[] = $middleware;
+        $this->registered[] = $this->getMiddlewareArgName($middleware);
         return $this;
     }
 
@@ -175,7 +155,7 @@ class RequestHandler implements RequestHandlerInterface, HasKernel
      * @return $this
      * @throws RequestHandlerException
      */
-    public function next($middleware): self
+    public function pipeNext($middleware): self
     {
         $this->validateMiddleware($middleware);
         $this->pipeAtPosition($this->index + 1, $middleware);
@@ -206,12 +186,8 @@ class RequestHandler implements RequestHandlerInterface, HasKernel
 
     /**
      * @param ServerRequestInterface $request
-     * @throws CircularDependencyException
-     * @throws ContainerException
-     * @throws NotFoundException
-     * @throws ReflectionException
-     * @throws RequestHandlerException
      * @throws MultipleBindingException
+     * @throws RequestHandlerException
      */
     private function ensureStarted(ServerRequestInterface $request)
     {
@@ -219,14 +195,7 @@ class RequestHandler implements RequestHandlerInterface, HasKernel
             return;
         }
         $this->container()->bind([ServerRequestInterface::class, get_class($request)])->toObject($request);
-        foreach ($this->moduleList as $module) {
-            /**
-             * @var $instance ModuleContract
-             */
-            $instance = $this->build($module);
-            $instance->bootstrap();
-        }
-        $this->add(new DispatchRoutes($this->router, $this->container()));
+        $this->pipe(new DispatchRoutes($this->router, $this->container()));
         $this->started = true;
     }
 
@@ -239,11 +208,11 @@ class RequestHandler implements RequestHandlerInterface, HasKernel
      */
     private function getCurrentMiddleware(): ?MiddlewareInterface
     {
-        if (!isset($this->middlewareList[$this->index])) {
+        if (!isset($this->pipeline[$this->index])) {
             return null;
         }
         return $this->build(
-            $this->middlewareList[$this->index]
+            $this->pipeline[$this->index]
         );
     }
 
@@ -328,6 +297,24 @@ class RequestHandler implements RequestHandlerInterface, HasKernel
     }
 
     /**
+     * @return ResponseSender
+     */
+    public function sender(): ResponseSender
+    {
+        return new ResponseSender($this->router());
+    }
+
+    /**
+     * @param $data
+     * @param int $statusCode
+     * @return ResponseInterface
+     */
+    public function send($data, int $statusCode = 200): ResponseInterface
+    {
+        return $this->sender()->send($data, $statusCode);
+    }
+
+    /**
      * @param $middleware
      * @return RequestHandler
      * @throws RequestHandlerException
@@ -353,11 +340,12 @@ class RequestHandler implements RequestHandlerInterface, HasKernel
         }
         $this->validateMiddleware($middleware);
         array_splice(
-            $this->middlewareList,
+            $this->pipeline,
             $index,
             0,
             is_array($middleware) ? $middleware : [$middleware]
         );
+        $this->registered[] = $this->getMiddlewareArgName($middleware);
         return $this;
     }
 
@@ -367,7 +355,7 @@ class RequestHandler implements RequestHandlerInterface, HasKernel
      */
     private function isValidIndex($index): bool
     {
-        return ($index >= 0 && $index <= count($this->middlewareList));
+        return ($index >= 0 && $index <= count($this->pipeline));
     }
 
 
@@ -391,7 +379,7 @@ class RequestHandler implements RequestHandlerInterface, HasKernel
     {
         return is_string($arg)
             || $arg instanceof MiddlewareInterface
-            || is_array($arg)
+            || (is_array($arg) && (count($arg) == 2) && isset($arg[0]) && isset($arg[1]))
             || is_callable($arg);
     }
 
@@ -401,30 +389,17 @@ class RequestHandler implements RequestHandlerInterface, HasKernel
      */
     private function getMiddlewareArgName($middleware): string
     {
-        if (!is_object($middleware)) {
-            return is_string($middleware) ? ($middleware) : gettype($middleware);
+        if (is_string($middleware)) {
+            return $middleware;
+        }
+        if (is_object($middleware)) {
+            return get_class($middleware);
         }
         if (is_array($middleware)) {
-            return "array";
+            $class = $middleware[0];
+            $method = $middleware[1];
+            return "$class@$method";
         }
-        return get_class($middleware);
-    }
-
-    /**
-     * @return ResponseSender
-     */
-    public function sender(): ResponseSender
-    {
-        return new ResponseSender($this->router());
-    }
-
-    /**
-     * @param $data
-     * @param int $statusCode
-     * @return ResponseInterface
-     */
-    public function send($data, int $statusCode = 200): ResponseInterface
-    {
-        return $this->sender()->send($data, $statusCode);
+        return "closure";
     }
 }

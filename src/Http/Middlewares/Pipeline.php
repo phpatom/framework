@@ -2,9 +2,6 @@
 
 namespace Atom\Framework\Http\Middlewares;
 
-use Atom\DI\Exceptions\CircularDependencyException;
-use Atom\DI\Exceptions\ContainerException;
-use Atom\DI\Exceptions\NotFoundException;
 use Atom\Framework\Exceptions\RequestHandlerException;
 use Atom\Framework\Http\RequestHandler;
 use Psr\Http\Message\ResponseInterface;
@@ -28,9 +25,6 @@ class Pipeline extends AbstractMiddleware
      * @param RequestHandler $handler
      * @return ResponseInterface
      * @throws RequestHandlerException
-     * @throws CircularDependencyException
-     * @throws ContainerException
-     * @throws NotFoundException
      */
     public function run(ServerRequestInterface $request, RequestHandler $handler): ResponseInterface
     {

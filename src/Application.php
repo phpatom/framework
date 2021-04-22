@@ -11,11 +11,9 @@ use Atom\Event\Contracts\EventDispatcherContract;
 use Atom\Event\Exceptions\ListenerAlreadyAttachedToEvent;
 use Atom\Framework\Contracts\EmitterContract;
 use Atom\Framework\Contracts\HasKernel;
-use Atom\Framework\Contracts\ModuleContract;
 use Atom\Framework\Contracts\ServiceProviderContract;
 use Atom\Framework\FileSystem\Path;
 use Atom\Framework\Http\RequestHandler;
-use Atom\Framework\Http\ResponseSender;
 use Atom\Routing\CanRegisterRoute;
 use Atom\Routing\Route;
 use Atom\Routing\Router;
@@ -254,33 +252,6 @@ class Application
         return $this->router;
     }
 
-    /**
-     * @param array $modules
-     * @return Application
-     * @throws CircularDependencyException
-     * @throws ContainerException
-     * @throws NotFoundException v
-     * @throws ReflectionException
-     */
-    public function withModules(array $modules): self
-    {
-        $this->requestHandler()->withModules($modules);
-        return $this;
-    }
-
-    /**
-     * @param string|ModuleContract $module
-     * @return Application
-     * @throws CircularDependencyException
-     * @throws ContainerException
-     * @throws NotFoundException v
-     * @throws ReflectionException
-     */
-    public function withModule($module): self
-    {
-        $this->requestHandler()->withModule($module);
-        return $this;
-    }
 
     /**
      * @param string $prefix
@@ -310,7 +281,7 @@ class Application
      */
     public function add($middleware): Application
     {
-        $this->requestHandler()->add($middleware);
+        $this->requestHandler()->pipe($middleware);
         return $this;
     }
 

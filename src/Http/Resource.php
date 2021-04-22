@@ -5,7 +5,7 @@ namespace Atom\Framework\Http;
 use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
 use Atom\DI\Exceptions\NotFoundException;
-use Atom\DI\Exceptions\StorageNotFoundException;
+use Atom\Event\Exceptions\ListenerAlreadyAttachedToEvent;
 use Atom\Framework\Http\Middlewares\AbstractMiddleware;
 use Atom\Routing\Exceptions\RouteNotFoundException;
 use Fig\Http\Message\RequestMethodInterface;
@@ -15,6 +15,8 @@ use Laminas\Diactoros\Response\RedirectResponse;
 use Laminas\Diactoros\Response\TextResponse;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
+use ReflectionException;
+use Throwable;
 
 abstract class Resource extends AbstractMiddleware
 {
@@ -57,7 +59,7 @@ abstract class Resource extends AbstractMiddleware
      * @throws CircularDependencyException
      * @throws ContainerException
      * @throws NotFoundException
-     * @throws StorageNotFoundException
+     * @throws ReflectionException
      */
     protected function render(
         string $view,
@@ -95,11 +97,17 @@ abstract class Resource extends AbstractMiddleware
      * @param int $status
      * @param array $headers
      * @return RedirectResponse
+     * @throws CircularDependencyException
+     * @throws ContainerException
+     * @throws NotFoundException
+     * @throws ReflectionException
      * @throws RouteNotFoundException
+     * @throws ListenerAlreadyAttachedToEvent
+     * @throws Throwable
      */
     public function redirectRoute(string $route, array $data, int $status = 200, array $headers = []): RedirectResponse
     {
-        return Response::redirectRoute($route, $data, $status, $headers);
+        return Response::redirectRoute($this->handler, $route, $data, $status, $headers);
     }
 
     public function doGet(ServerRequestInterface $request, RequestHandler $handler)

@@ -5,7 +5,6 @@ namespace Atom\Framework;
 use Atom\DI\Container;
 use Atom\DI\Exceptions\CircularDependencyException;
 use Atom\DI\Exceptions\ContainerException;
-use Atom\DI\Exceptions\MultipleBindingException;
 use Atom\DI\Exceptions\NotFoundException;
 use Atom\Event\Exceptions\ListenerAlreadyAttachedToEvent;
 use Atom\Framework\Contracts\EmitterContract;

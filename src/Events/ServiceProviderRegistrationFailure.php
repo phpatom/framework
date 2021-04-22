@@ -7,7 +7,7 @@ use Atom\Framework\Contracts\ServiceProviderContract;
 use Atom\Event\AbstractEvent;
 use Throwable;
 
-class ServiceProviderRegistrationFailed extends AbstractEvent
+class ServiceProviderRegistrationFailure extends AbstractEvent
 {
     /**
      * @var ServiceProviderContract
