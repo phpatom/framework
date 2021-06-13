@@ -37,8 +37,7 @@ class PipelineFactory
 
     public function via(
         PipelineProcessorContract $processor
-    ): PipelineFactory
-    {
+    ): PipelineFactory {
         $this->processor = $processor;
         return $this;
     }
